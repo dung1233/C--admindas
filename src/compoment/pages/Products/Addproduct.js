@@ -5,13 +5,18 @@ import Select from 'react-select';
 import { Tagify } from 'react-tagify';
 const Addproduct = () => {
   const menuRef = useRef(null);
-  const [menuState, setMenuState] = useState({
-    dashboard: false,
-    layouts: false,
-    frontPages: false,
-    ecommerce: false, // Ví dụ thêm menu mới
-    settings: false   // Ví dụ thêm menu mới
-  });
+  const [menuState, setMenuState] = useState(() => {
+    // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
+    const savedMenuState = localStorage.getItem('menuState');
+    return savedMenuState ? JSON.parse(savedMenuState) : {
+        dashboard: false,
+        layouts: false,
+        frontPages: false,
+        ecommerce: false,
+        settings: false,
+        order: false
+    };
+});
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: 'image/*',
     onDrop: (acceptedFiles) => {
@@ -68,11 +73,16 @@ const Addproduct = () => {
 
   // Hàm xử lý toggle cho từng menu
   const handleMenuToggle = (menuName) => {
-    setMenuState((prevState) => ({
-      ...prevState,
-      [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
-    }));
-  };
+    setMenuState((prevState) => {
+        const newState = {
+            ...prevState,
+            [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
+        };
+        // Lưu trạng thái menu mới vào localStorage
+        localStorage.setItem('menuState', JSON.stringify(newState));
+        return newState;
+    });
+};
 
   useEffect(() => {
     const menuInner = menuRef.current;
@@ -83,6 +93,15 @@ const Addproduct = () => {
     } else {
       menuInner.style.overflowY = 'hidden';
     }
+    // Lấy vị trí cuộn từ localStorage và đặt lại
+    const savedScrollPosition = localStorage.getItem('menuScrollPosition');
+    if (savedScrollPosition) {
+        menuInner.scrollTop = parseInt(savedScrollPosition, 10);
+    }
+     // Lưu vị trí cuộn trước khi trang được tải lại
+     const handleBeforeUnload = () => {
+      localStorage.setItem('menuScrollPosition', menuInner.scrollTop);
+  };
 
     // Xử lý lại khi kích thước cửa sổ thay đổi
     const handleResize = () => {
@@ -95,953 +114,313 @@ const Addproduct = () => {
 
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
 
     // Cleanup event listener
     return () => {
       window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
   return (
     <div>
       <div className="layout-wrapper layout-content-navbar">
         <div className="layout-container">
-          <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme" data-bg-class="bg-menu-theme">
-            <div className="app-brand demo">
-              <a href="index.html" className="app-brand-link">
-                <span className="app-brand-logo demo">
-                  <svg
-                    width={25}
-                    viewBox="0 0 25 42"
-                    version="1.1"
-                    xmlns="http://www.w3.org/2000/svg"
-                    xmlnsXlink="http://www.w3.org/1999/xlink"
-                  >
-                    <defs>
-                      <path
-                        d="M13.7918663,0.358365126 L3.39788168,7.44174259 C0.566865006,9.69408886 -0.379795268,12.4788597 0.557900856,15.7960551 C0.68998853,16.2305145 1.09562888,17.7872135 3.12357076,19.2293357 C3.8146334,19.7207684 5.32369333,20.3834223 7.65075054,21.2172976 L7.59773219,21.2525164 L2.63468769,24.5493413 C0.445452254,26.3002124 0.0884951797,28.5083815 1.56381646,31.1738486 C2.83770406,32.8170431 5.20850219,33.2640127 7.09180128,32.5391577 C8.347334,32.0559211 11.4559176,30.0011079 16.4175519,26.3747182 C18.0338572,24.4997857 18.6973423,22.4544883 18.4080071,20.2388261 C17.963753,17.5346866 16.1776345,15.5799961 13.0496516,14.3747546 L10.9194936,13.4715819 L18.6192054,7.984237 L13.7918663,0.358365126 Z"
-                        id="path-1"
-                      />
-                      <path
-                        d="M5.47320593,6.00457225 C4.05321814,8.216144 4.36334763,10.0722806 6.40359441,11.5729822 C8.61520715,12.571656 10.0999176,13.2171421 10.8577257,13.5094407 L15.5088241,14.433041 L18.6192054,7.984237 C15.5364148,3.11535317 13.9273018,0.573395879 13.7918663,0.358365126 C13.5790555,0.511491653 10.8061687,2.3935607 5.47320593,6.00457225 Z"
-                        id="path-3"
-                      />
-                      <path
-                        d="M7.50063644,21.2294429 L12.3234468,23.3159332 C14.1688022,24.7579751 14.397098,26.4880487 13.008334,28.506154 C11.6195701,30.5242593 10.3099883,31.790241 9.07958868,32.3040991 C5.78142938,33.4346997 4.13234973,34 4.13234973,34 C4.13234973,34 2.75489982,33.0538207 2.37032616e-14,31.1614621 C-0.55822714,27.8186216 -0.55822714,26.0572515 -4.05231404e-15,25.8773518 C0.83734071,25.6075023 2.77988457,22.8248993 3.3049379,22.52991 C3.65497346,22.3332504 5.05353963,21.8997614 7.50063644,21.2294429 Z"
-                        id="path-4"
-                      />
-                      <path
-                        d="M20.6,7.13333333 L25.6,13.8 C26.2627417,14.6836556 26.0836556,15.9372583 25.2,16.6 C24.8538077,16.8596443 24.4327404,17 24,17 L14,17 C12.8954305,17 12,16.1045695 12,15 C12,14.5672596 12.1403557,14.1461923 12.4,13.8 L17.4,7.13333333 C18.0627417,6.24967773 19.3163444,6.07059163 20.2,6.73333333 C20.3516113,6.84704183 20.4862915,6.981722 20.6,7.13333333 Z"
-                        id="path-5"
-                      />
-                    </defs>
-                    <g
-                      id="g-app-brand"
-                      stroke="none"
-                      strokeWidth={1}
-                      fill="none"
-                      fillRule="evenodd"
-                    >
-                      <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
-                        <g id="Icon" transform="translate(27.000000, 15.000000)">
-                          <g id="Mask" transform="translate(0.000000, 8.000000)">
-                            <mask id="mask-2" fill="white">
-                              <use xlinkHref="#path-1" />
-                            </mask>
-                            <use fill="#696cff" xlinkHref="#path-1" />
-                            <g id="Path-3" mask="url(#mask-2)">
-                              <use fill="#696cff" xlinkHref="#path-3" />
-                              <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-3" />
-                            </g>
-                            <g id="Path-4" mask="url(#mask-2)">
-                              <use fill="#696cff" xlinkHref="#path-4" />
-                              <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-4" />
-                            </g>
-                          </g>
-                          <g
-                            id="Triangle"
-                            transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
-                          >
-                            <use fill="#696cff" xlinkHref="#path-5" />
-                            <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-5" />
-                          </g>
-                        </g>
-                      </g>
-                    </g>
-                  </svg>
-                </span>
-                <span className="app-brand-text demo menu-text fw-bold ms-2">sneat</span>
-              </a>
-
-              <a href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
-                <i className="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
-              </a>
-            </div>
-
-            <div className="menu-inner-shadow" style={{ display: "none" }}></div>
-
-            {/* Menu Inner */}
-            <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-              <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
-                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
-                  <i className="menu-icon tf-icons bx bx-home-smile"></i>
-                  <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
-                  <span className="badge rounded-pill bg-danger ms-auto">5</span>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item ">
-                    <a href="index.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Analytics">Analytics</div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
-                      <div className="text-truncate" data-i18n="CRM">CRM</div>
-                    </a>
-                  </li>
-                  <li className="menu-item active">
-                    <a
-                      href="/Commerce"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="eCommerce">
-                        eCommerce
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Logistics">
-                        Logistics
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="app-academy-dashboard.html"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Academy">
-                        Academy
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Layouts */}
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-layout" />
-                  <div className="text-truncate" data-i18n="Layouts">
-                    Layouts
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="layouts-without-menu.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Without menu">
-                        Without menu
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="layouts-without-navbar.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Without navbar">
-                        Without navbar
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="layouts-fluid.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Fluid">
-                        Fluid
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="layouts-container.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Container">
-                        Container
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="layouts-blank.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Blank">
-                        Blank
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Front Pages */}
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-store" />
-                  <div className="text-truncate" data-i18n="Front Pages">
-                    Front Pages
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/front-pages/landing-page.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Landing">
-                        Landing
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/front-pages/pricing-page.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Pricing">
-                        Pricing
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/front-pages/payment-page.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Payment">
-                        Payment
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/front-pages/checkout-page.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Checkout">
-                        Checkout
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/front-pages/help-center-landing.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Help Center">
-                        Help Center
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Apps & Pages */}
-              <li className="menu-header small text-uppercase">
-                <span className="menu-header-text">Apps &amp; Pages</span>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-email.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-envelope" />
-                  <div className="text-truncate" data-i18n="Email">
-                    Email
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-chat.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-chat" />
-                  <div className="text-truncate" data-i18n="Chat">
-                    Chat
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-calendar.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-calendar" />
-                  <div className="text-truncate" data-i18n="Calendar">
-                    Calendar
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-kanban.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-grid" />
-                  <div className="text-truncate" data-i18n="Kanban">
-                    Kanban
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
-                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
-                  <i className="menu-icon tf-icons bx bx-cart-alt" />
-                  <div className="text-truncate" data-i18n="eCommerce">
-                    eCommerce
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item ">
-                    <a href="app-ecommerce-dashboard.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Dashboard">
-                        Dashboard
-                      </div>
-                    </a>
-                  </li>
-                  <li className={`menu-item active ${menuState.frontPages ? 'open' : ''}`}>
-                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('frontPages'); }}>
-                      <div className="text-truncate" data-i18n="Products">
-                        Products
-                      </div>
-                    </a>
-                    <ul className="menu-sub">
-                      <li className="menu-item">
-                        <a href="/Product" className="menu-link">
-                          <div className="text-truncate" data-i18n="Product List">
-                            Product List
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item active">
-                        <a href="app-ecommerce-product-add.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Add Product">
-                            Add Product
-                          </div>
-                        </a>
-                      </li>
-
-                      <li className="menu-item">
-                        <a href="app-ecommerce-category-list.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Category List">
-                            Category List
-                          </div>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className="menu-item">
-                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                      <div className="text-truncate" data-i18n="Order">
-                        Order
-                      </div>
-                    </a>
-                    <ul className="menu-sub">
-                      <li className="menu-item">
-                        <a href="app-ecommerce-order-list.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Order List">
-                            Order List
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="app-ecommerce-order-details.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Order Details">
-                            Order Details
-                          </div>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className="menu-item">
-                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                      <div className="text-truncate" data-i18n="Customer">
-                        Customer
-                      </div>
-                    </a>
-                    <ul className="menu-sub">
-                      <li className="menu-item">
-                        <a href="app-ecommerce-customer-all.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="All Customers">
-                            All Customers
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="javascript:void(0);" className="menu-link menu-toggle">
-                          <div className="text-truncate" data-i18n="Customer Details">
-                            Customer Details
-                          </div>
-                        </a>
-                        <ul className="menu-sub">
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-overview.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Overview">
-                                Overview
-                              </div>
+        <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme" data-bg-class="bg-menu-theme">
+                        <div className="app-brand demo">
+                            <a href="index.html" className="app-brand-link">
+                                <span className="app-brand-logo demo">
+                                    <svg
+                                        width={25}
+                                        viewBox="0 0 25 42"
+                                        version="1.1"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        xmlnsXlink="http://www.w3.org/1999/xlink"
+                                    >
+                                        <defs>
+                                            <path
+                                                d="M13.7918663,0.358365126 L3.39788168,7.44174259 C0.566865006,9.69408886 -0.379795268,12.4788597 0.557900856,15.7960551 C0.68998853,16.2305145 1.09562888,17.7872135 3.12357076,19.2293357 C3.8146334,19.7207684 5.32369333,20.3834223 7.65075054,21.2172976 L7.59773219,21.2525164 L2.63468769,24.5493413 C0.445452254,26.3002124 0.0884951797,28.5083815 1.56381646,31.1738486 C2.83770406,32.8170431 5.20850219,33.2640127 7.09180128,32.5391577 C8.347334,32.0559211 11.4559176,30.0011079 16.4175519,26.3747182 C18.0338572,24.4997857 18.6973423,22.4544883 18.4080071,20.2388261 C17.963753,17.5346866 16.1776345,15.5799961 13.0496516,14.3747546 L10.9194936,13.4715819 L18.6192054,7.984237 L13.7918663,0.358365126 Z"
+                                                id="path-1"
+                                            />
+                                            <path
+                                                d="M5.47320593,6.00457225 C4.05321814,8.216144 4.36334763,10.0722806 6.40359441,11.5729822 C8.61520715,12.571656 10.0999176,13.2171421 10.8577257,13.5094407 L15.5088241,14.433041 L18.6192054,7.984237 C15.5364148,3.11535317 13.9273018,0.573395879 13.7918663,0.358365126 C13.5790555,0.511491653 10.8061687,2.3935607 5.47320593,6.00457225 Z"
+                                                id="path-3"
+                                            />
+                                            <path
+                                                d="M7.50063644,21.2294429 L12.3234468,23.3159332 C14.1688022,24.7579751 14.397098,26.4880487 13.008334,28.506154 C11.6195701,30.5242593 10.3099883,31.790241 9.07958868,32.3040991 C5.78142938,33.4346997 4.13234973,34 4.13234973,34 C4.13234973,34 2.75489982,33.0538207 2.37032616e-14,31.1614621 C-0.55822714,27.8186216 -0.55822714,26.0572515 -4.05231404e-15,25.8773518 C0.83734071,25.6075023 2.77988457,22.8248993 3.3049379,22.52991 C3.65497346,22.3332504 5.05353963,21.8997614 7.50063644,21.2294429 Z"
+                                                id="path-4"
+                                            />
+                                            <path
+                                                d="M20.6,7.13333333 L25.6,13.8 C26.2627417,14.6836556 26.0836556,15.9372583 25.2,16.6 C24.8538077,16.8596443 24.4327404,17 24,17 L14,17 C12.8954305,17 12,16.1045695 12,15 C12,14.5672596 12.1403557,14.1461923 12.4,13.8 L17.4,7.13333333 C18.0627417,6.24967773 19.3163444,6.07059163 20.2,6.73333333 C20.3516113,6.84704183 20.4862915,6.981722 20.6,7.13333333 Z"
+                                                id="path-5"
+                                            />
+                                        </defs>
+                                        <g
+                                            id="g-app-brand"
+                                            stroke="none"
+                                            strokeWidth={1}
+                                            fill="none"
+                                            fillRule="evenodd"
+                                        >
+                                            <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
+                                                <g id="Icon" transform="translate(27.000000, 15.000000)">
+                                                    <g id="Mask" transform="translate(0.000000, 8.000000)">
+                                                        <mask id="mask-2" fill="white">
+                                                            <use xlinkHref="#path-1" />
+                                                        </mask>
+                                                        <use fill="#696cff" xlinkHref="#path-1" />
+                                                        <g id="Path-3" mask="url(#mask-2)">
+                                                            <use fill="#696cff" xlinkHref="#path-3" />
+                                                            <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-3" />
+                                                        </g>
+                                                        <g id="Path-4" mask="url(#mask-2)">
+                                                            <use fill="#696cff" xlinkHref="#path-4" />
+                                                            <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-4" />
+                                                        </g>
+                                                    </g>
+                                                    <g
+                                                        id="Triangle"
+                                                        transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
+                                                    >
+                                                        <use fill="#696cff" xlinkHref="#path-5" />
+                                                        <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-5" />
+                                                    </g>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </span>
+                                <span className="app-brand-text demo menu-text fw-bold ms-2">sneat</span>
                             </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-security.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Security">
-                                Security
-                              </div>
+
+                            <a href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
+                                <i className="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
                             </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-billing.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Address & Billing">
-                                Address &amp; Billing
-                              </div>
-                            </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-notifications.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Notifications">
-                                Notifications
-                              </div>
-                            </a>
-                          </li>
+                        </div>
+
+                        <div className="menu-inner-shadow" style={{ display: "none" }}></div>
+
+                        {/* Menu Inner */}
+                        <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
+                            <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
+                                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
+                                    <i className="menu-icon tf-icons bx bx-home-smile"></i>
+                                    <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
+                                    <span className="badge rounded-pill bg-danger ms-auto">5</span>
+                                </a>
+                                <ul className="menu-sub">
+                                    <li className="menu-item">
+                                        <a href="index.html" className="menu-link">
+                                            <div className="text-truncate" data-i18n="Analytics">Analytics</div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
+                                            <div className="text-truncate" data-i18n="CRM">CRM</div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item active">
+                                        <a
+                                            href="/Commerce"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="eCommerce">
+                                                eCommerce
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a
+                                            href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="Logistics">
+                                                Logistics
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a
+                                            href="app-academy-dashboard.html"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="Academy">
+                                                Academy
+                                            </div>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
+                                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
+                                    <i className="menu-icon tf-icons bx bx-cart-alt" />
+                                    <div className="text-truncate" data-i18n="eCommerce">
+                                        eCommerce
+                                    </div>
+                                </a>
+                                <ul className="menu-sub">
+                                    <li className="menu-item ">
+                                        <a href="app-ecommerce-dashboard.html" className="menu-link">
+                                            <div className="text-truncate" data-i18n="Dashboard">
+                                                Dashboard
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li className={`menu-item ${menuState.frontPages ? 'open' : ''}`}>
+                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('frontPages'); }}>
+                                            <div className="text-truncate" data-i18n="Products">
+                                                Products
+                                            </div>
+                                        </a>
+                                        <ul className="menu-sub">
+                                            <li className="menu-item">
+                                                <a href="/Product" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Product List">
+                                                        Product List
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item active">
+                                                <a href="/Addproduct" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Add Product">
+                                                        Add Product
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="/Catenorylist" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Category List">
+                                                        Category List
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
+                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('order'); }}>
+                                            <div className="text-truncate" data-i18n="Order">
+                                                Order
+                                            </div>
+                                        </a>
+                                        <ul className="menu-sub">
+                                            <li className="menu-item">
+                                                <a href="/Oderlist" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Order List">
+                                                        Order List
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="/Oderdetails" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Order Details">
+                                                        Order Details
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
+                                            <div className="text-truncate" data-i18n="Customer">
+                                                Customer
+                                            </div>
+                                        </a>
+                                        <ul className="menu-sub">
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-customer-all.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="All Customers">
+                                                        All Customers
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="javascript:void(0);" className="menu-link menu-toggle">
+                                                    <div className="text-truncate" data-i18n="Customer Details">
+                                                        Customer Details
+                                                    </div>
+                                                </a>
+                                                <ul className="menu-sub">
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-overview.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Overview">
+                                                                Overview
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-security.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Security">
+                                                                Security
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-billing.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Address & Billing">
+                                                                Address &amp; Billing
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-notifications.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Notifications">
+                                                                Notifications
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a href="app-ecommerce-manage-reviews.html" className="menu-link">
+                                            <div className="text-truncate" data-i18n="Manage Reviews">
+                                                Manage Reviews
+                                            </div>
+                                        </a>
+                                    </li>
+                                  
+                                    <li className="menu-item">
+                                        <a href="javascript:void(0);" className="menu-link menu-toggle">
+                                            <div className="text-truncate" data-i18n="Settings">
+                                                Settings
+                                            </div>
+                                        </a>
+                                       
+                                    </li>
+                                </ul>
+                            </li>
+
+
+                            <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
+                                <div className="ps__thumb-x" tabIndex={0} style={{ left: 0, width: 0 }} />
+                            </div>
+                            <div className="ps__rail-y" style={{ top: 0, height: 254, right: 4 }}>
+                                <div
+                                    className="ps__thumb-y"
+                                    tabIndex={0}
+                                    style={{ top: 0, height: 44 }}
+                                />
+                            </div>
                         </ul>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className="menu-item">
-                    <a href="app-ecommerce-manage-reviews.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Manage Reviews">
-                        Manage Reviews
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="app-ecommerce-referral.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Referrals">
-                        Referrals
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                      <div className="text-truncate" data-i18n="Settings">
-                        Settings
-                      </div>
-                    </a>
-                    <ul className="menu-sub">
-                      <li className="menu-item">
-                        <a href="app-ecommerce-settings-detail.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Store Details">
-                            Store Details
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="app-ecommerce-settings-payments.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Payments">
-                            Payments
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="app-ecommerce-settings-checkout.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Checkout">
-                            Checkout
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="app-ecommerce-settings-shipping.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Shipping & Delivery">
-                            Shipping &amp; Delivery
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="app-ecommerce-settings-locations.html" className="menu-link">
-                          <div className="text-truncate" data-i18n="Locations">
-                            Locations
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a
-                          href="app-ecommerce-settings-notifications.html"
-                          className="menu-link"
-                        >
-                          <div className="text-truncate" data-i18n="Notifications">
-                            Notifications
-                          </div>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </li>
-
-              {/* Pages */}
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-dock-top" />
-                  <div className="text-truncate" data-i18n="Account Settings">
-                    Account Settings
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="pages-account-settings-account.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Account">
-                        Account
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="pages-account-settings-notifications.html"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Notifications">
-                        Notifications
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="pages-account-settings-connections.html"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Connections">
-                        Connections
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-lock-open-alt" />
-                  <div className="text-truncate" data-i18n="Authentications">
-                    Authentications
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="auth-login-basic.html" className="menu-link" target="_blank">
-                      <div className="text-truncate" data-i18n="Basic">
-                        Login
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="auth-register-basic.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Basic">
-                        Register
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="auth-forgot-password-basic.html"
-                      className="menu-link"
-                      target="_blank"
-                    >
-                      <div className="text-truncate" data-i18n="Basic">
-                        Forgot Password
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-cube-alt" />
-                  <div className="text-truncate" data-i18n="Misc">
-                    Misc
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="pages-misc-error.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Error">
-                        Error
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="pages-misc-under-maintenance.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Under Maintenance">
-                        Under Maintenance
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Components */}
-              <li className="menu-header small text-uppercase">
-                <span className="menu-header-text">Components</span>
-              </li>
-              {/* Cards */}
-              <li className="menu-item">
-                <a href="cards-basic.html" className="menu-link">
-                  <i className="menu-icon tf-icons bx bx-collection" />
-                  <div className="text-truncate" data-i18n="Basic">
-                    Cards
-                  </div>
-                </a>
-              </li>
-              {/* User interface */}
-              <li className="menu-item">
-                <a href="javascript:void(0)" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-box" />
-                  <div className="text-truncate" data-i18n="User interface">
-                    User interface
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="ui-accordion.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Accordion">
-                        Accordion
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-alerts.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Alerts">
-                        Alerts
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-badges.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Badges">
-                        Badges
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-buttons.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Buttons">
-                        Buttons
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-carousel.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Carousel">
-                        Carousel
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-collapse.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Collapse">
-                        Collapse
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-dropdowns.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Dropdowns">
-                        Dropdowns
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-footer.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Footer">
-                        Footer
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-list-groups.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="List Groups">
-                        List groups
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-modals.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Modals">
-                        Modals
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-navbar.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Navbar">
-                        Navbar
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-offcanvas.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Offcanvas">
-                        Offcanvas
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-pagination-breadcrumbs.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Pagination & Breadcrumbs">
-                        Pagination &amp; Breadcrumbs
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-progress.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Progress">
-                        Progress
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-spinners.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Spinners">
-                        Spinners
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-tabs-pills.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Tabs & Pills">
-                        Tabs &amp; Pills
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-toasts.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Toasts">
-                        Toasts
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-tooltips-popovers.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Tooltips & Popovers">
-                        Tooltips &amp; Popovers
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="ui-typography.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Typography">
-                        Typography
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Extended components */}
-              <li className="menu-item">
-                <a href="javascript:void(0)" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-copy" />
-                  <div className="text-truncate" data-i18n="Extended UI">
-                    Extended UI
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="extended-ui-perfect-scrollbar.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Perfect Scrollbar">
-                        Perfect Scrollbar
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="extended-ui-text-divider.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Text Divider">
-                        Text Divider
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li className="menu-item">
-                <a href="icons-boxicons.html" className="menu-link">
-                  <i className="menu-icon tf-icons bx bx-crown" />
-                  <div className="text-truncate" data-i18n="Boxicons">
-                    Boxicons
-                  </div>
-                </a>
-              </li>
-              {/* Forms & Tables */}
-              <li className="menu-header small text-uppercase">
-                <span className="menu-header-text">Forms &amp; Tables</span>
-              </li>
-              {/* Forms */}
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-detail" />
-                  <div className="text-truncate" data-i18n="Form Elements">
-                    Form Elements
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="forms-basic-inputs.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Basic Inputs">
-                        Basic Inputs
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="forms-input-groups.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Input groups">
-                        Input groups
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li className="menu-item">
-                <a href="javascript:void(0);" className="menu-link menu-toggle">
-                  <i className="menu-icon tf-icons bx bx-detail" />
-                  <div className="text-truncate" data-i18n="Form Layouts">
-                    Form Layouts
-                  </div>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="form-layouts-vertical.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Vertical Form">
-                        Vertical Form
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="form-layouts-horizontal.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Horizontal Form">
-                        Horizontal Form
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {/* Form Validation */}
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/form-validation.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-list-check" />
-                  <div className="text-truncate" data-i18n="Form Validation">
-                    Form Validation
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              {/* Tables */}
-              <li className="menu-item">
-                <a href="tables-basic.html" className="menu-link">
-                  <i className="menu-icon tf-icons bx bx-table" />
-                  <div className="text-truncate" data-i18n="Tables">
-                    Tables
-                  </div>
-                </a>
-              </li>
-              {/* Data Tables */}
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/tables-datatables-basic.html"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-grid" />
-                  <div className="text-truncate" data-i18n="Datatables">
-                    Datatables
-                  </div>
-                  <div className="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">
-                    Pro
-                  </div>
-                </a>
-              </li>
-              {/* Misc */}
-              <li className="menu-header small text-uppercase">
-                <span className="menu-header-text">Misc</span>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://github.com/themeselection/sneat-html-admin-template-free/issues"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-support" />
-                  <div className="text-truncate" data-i18n="Support">
-                    Support
-                  </div>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a
-                  href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/"
-                  target="_blank"
-                  className="menu-link"
-                >
-                  <i className="menu-icon tf-icons bx bx-file" />
-                  <div className="text-truncate" data-i18n="Documentation">
-                    Documentation
-                  </div>
-                </a>
-              </li>
-              <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                <div className="ps__thumb-x" tabIndex={0} style={{ left: 0, width: 0 }} />
-              </div>
-              <div className="ps__rail-y" style={{ top: 0, height: 254, right: 4 }}>
-                <div
-                  className="ps__thumb-y"
-                  tabIndex={0}
-                  style={{ top: 0, height: 44 }}
-                />
-              </div>
-            </ul>
-          </aside>
+                    </aside>
           <div className="layout-page">
             {/* Navbar */}
             <nav
