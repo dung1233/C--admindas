@@ -258,7 +258,7 @@ const Oderlist = () => {
                                                 </a>
                                             </li>
                                             <li className="menu-item active">
-                                                <a href="app-ecommerce-order-details.html" className="menu-link">
+                                                <a href="/Oderdetails" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Order Details">
                                                         Order Details
                                                     </div>
