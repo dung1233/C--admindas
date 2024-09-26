@@ -766,6 +766,7 @@ const Home = () => {
                                     </div>
                                 </a>
                             </li> */}
+                            
               <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
                 <div className="ps__thumb-x" tabIndex={0} style={{ left: 0, width: 0 }} />
               </div>

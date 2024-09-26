@@ -273,7 +273,7 @@ const Catenorylist = () => {
                                         </a>
                                         <ul className="menu-sub">
                                             <li className="menu-item">
-                                                <a href="app-ecommerce-customer-all.html" className="menu-link">
+                                                <a href="/Customer" className="menu-link">
                                                     <div className="text-truncate" data-i18n="All Customers">
                                                         All Customers
                                                     </div>

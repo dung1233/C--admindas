@@ -10,13 +10,17 @@ import Login from './compoment/pages/Login/Login';
 import Oderdetails from './compoment/pages/Oder/Oderdetails';
 import Review from './compoment/pages/Review/Review';
 import Chat from './compoment/pages/Chat';
+import Userlist from './compoment/pages/User/Userlist';
+import UserAc from './compoment/pages/User/UserAc';
+import Invoice from './compoment/pages/User/Invoice';
+import Customer from './compoment/pages/User/Customer'
 const App = () => {
   return (
     <Router>
       {/* Định nghĩa Routes */}
       <Routes>
         {/* Trang Home */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Commerce />} />
         <Route path="/Commerce" element={<Commerce />} />
         <Route path="/Product" element={<Product />} />
         <Route path="/Addproduct" element={<Addproduct />} />
@@ -26,6 +30,10 @@ const App = () => {
         <Route path='/Oderdetails' element={<Oderdetails />} />
         <Route path='/Review' element={<Review />} />
         <Route path='/Chat' element={<Chat />} />
+        <Route path='/Userlist' element={<Userlist />} />
+        <Route path='/UserAc' element={<UserAc />} />
+        <Route path='/Invoice' element={<Invoice />} />
+        <Route path='/Customer' element={<Customer />} />
       </Routes>
     </Router>
   )

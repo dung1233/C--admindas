@@ -11,7 +11,8 @@ const Oderlist = () => {
           frontPages: false,
           ecommerce: false,
           settings: false,
-          order: false
+          order: false,
+          Customer:false
       };
   });
 
@@ -250,15 +251,15 @@ const Oderlist = () => {
                                             </div>
                                         </a>
                                         <ul className="menu-sub">
-                                            <li className="menu-item ">
+                                            <li className="menu-item active">
                                                 <a href="/Oderlist" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Order List">
                                                         Order List
                                                     </div>
                                                 </a>
                                             </li>
-                                            <li className="menu-item active">
-                                                <a href="app-ecommerce-order-details.html" className="menu-link">
+                                            <li className="menu-item ">
+                                                <a href="/Oderdetails" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Order Details">
                                                         Order Details
                                                     </div>
@@ -266,15 +267,16 @@ const Oderlist = () => {
                                             </li>
                                         </ul>
                                     </li>
-                                    <li className="menu-item">
-                                        <a href="javascript:void(0);" className="menu-link menu-toggle">
+                                    
+                                    <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
                                             <div className="text-truncate" data-i18n="Customer">
                                                 Customer
                                             </div>
                                         </a>
                                         <ul className="menu-sub">
                                             <li className="menu-item">
-                                                <a href="app-ecommerce-customer-all.html" className="menu-link">
+                                                <a href="/Customer" className="menu-link">
                                                     <div className="text-truncate" data-i18n="All Customers">
                                                         All Customers
                                                     </div>
@@ -331,20 +333,7 @@ const Oderlist = () => {
                                             </li>
                                         </ul>
                                     </li>
-                                    <li className="menu-item">
-                                        <a href="app-ecommerce-manage-reviews.html" className="menu-link">
-                                            <div className="text-truncate" data-i18n="Manage Reviews">
-                                                Manage Reviews
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li className="menu-item">
-                                        <a href="app-ecommerce-referral.html" className="menu-link">
-                                            <div className="text-truncate" data-i18n="Referrals">
-                                                Referrals
-                                            </div>
-                                        </a>
-                                    </li>
+                                    
                                     <li className="menu-item">
                                         <a href="javascript:void(0);" className="menu-link menu-toggle">
                                             <div className="text-truncate" data-i18n="Settings">
