@@ -258,13 +258,17 @@ const Oderlist = () => {
                                                     </div>
                                                 </a>
                                             </li>
+<<<<<<< HEAD
                                             <li className="menu-item ">
+=======
+                                            < className="menu-item active">
+>>>>>>> 496acdf83f573a84442298b604abc084ed6f64f8
                                                 <a href="/Oderdetails" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Order Details">
                                                         Order Details
                                                     </div>
                                                 </a>
-                                            </li>
+                                            </
                                         </ul>
                                     </li>
                                     
