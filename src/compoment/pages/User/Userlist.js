@@ -1,6 +1,24 @@
+import axios from "axios";
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from "react-router-dom";
 
-const Userlist = () => {
+export default function Userlist() {
+    const [users,setUser] = useState([]);
+    const _getDetail = async ()=> {
+        const url = `https://projectky320240926105522.azurewebsites.net/api/User`;
+        try {
+            const rs = await axios.get(url); // auto chuyển thành json
+            setUser(rs.data);
+            console.log(rs.data);
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    useEffect(()=>{
+        _getDetail();
+    },[]);
+    
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState({
         dashboard: false,
@@ -1509,7 +1527,7 @@ const Userlist = () => {
                                                             style={{ width: 107 }}
                                                             aria-label="Plan: activate to sort column ascending"
                                                         >
-                                                            Plan
+                                                            City
                                                         </th>
                                                         <th
                                                             className="sorting"
@@ -1520,7 +1538,7 @@ const Userlist = () => {
                                                             style={{ width: 201 }}
                                                             aria-label="Billing: activate to sort column ascending"
                                                         >
-                                                            Billing
+                                                            Phone
                                                         </th>
                                                         <th
                                                             className="sorting"
@@ -1544,6 +1562,7 @@ const Userlist = () => {
                                                         </th>
                                                     </tr>
                                                 </thead>
+                                                {users.map((users) => (
                                                 <tbody>
                                                     <tr className="odd">
                                                         <td
@@ -1573,16 +1592,16 @@ const Userlist = () => {
                                                                         href="app-user-view-account.html"
                                                                         className="text-heading text-truncate"
                                                                     >
-                                                                        <span className="fw-medium">Zsazsa McCleverty</span>
+                                                                        <span className="fw-medium">{users.name}</span>
                                                                     </a>
-                                                                    <small>zmcclevertye@soundcloud.com</small>
+                                                                    <small>{users.email}</small>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>
                                                             <span className="text-truncate d-flex align-items-center text-heading">
                                                                 <i className="bx bx-user text-success me-2" />
-                                                                Maintainer
+                                                                {users.role}
                                                             </span>
                                                         </td>
                                                         <td>
@@ -1605,758 +1624,13 @@ const Userlist = () => {
                                                                 >
                                                                     <i className="bx bx-trash bx-md" />
                                                                 </a>
-                                                                <a
-                                                                    href="/UserAc"
+                                                                <Link
+                                                                   to={`/UserAc/${users.userId}`}
                                                                     className="btn btn-icon"
+                                                                   
                                                                 >
                                                                     <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="even">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <img
-                                                                            src="../../assets/img/avatars/7.png"
-                                                                            alt="Avatar"
-                                                                            className="rounded-circle"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Yoko Pottie</span>
-                                                                    </a>
-                                                                    <small>ypottiec@privacy.gov.au</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-crown text-primary me-2" />
-                                                                Subscriber
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Basic</span>
-                                                        </td>
-                                                        <td>Auto Debit</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-secondary"
-                                                                text-capitalized=""
-                                                            >
-                                                                Inactive
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="odd">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <img
-                                                                            src="../../assets/img/avatars/6.png"
-                                                                            alt="Avatar"
-                                                                            className="rounded-circle"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Wesley Burland</span>
-                                                                    </a>
-                                                                    <small>wburlandj@uiuc.edu</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-pie-chart-alt text-info me-2" />
-                                                                Editor
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Team</span>
-                                                        </td>
-                                                        <td>Auto Debit</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-secondary"
-                                                                text-capitalized=""
-                                                            >
-                                                                Inactive
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="even">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <span className="avatar-initial rounded-circle bg-label-success">
-                                                                            VK
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Vladamir Koschek</span>
-                                                                    </a>
-                                                                    <small>vkoschek17@abc.net.au</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-edit text-warning me-2" />
-                                                                Author
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Team</span>
-                                                        </td>
-                                                        <td>Manual - Paypal</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-success"
-                                                                text-capitalized=""
-                                                            >
-                                                                Active
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="odd">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <span className="avatar-initial rounded-circle bg-label-warning">
-                                                                            TW
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Tyne Widmore</span>
-                                                                    </a>
-                                                                    <small>twidmore12@bravesites.com</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-crown text-primary me-2" />
-                                                                Subscriber
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Team</span>
-                                                        </td>
-                                                        <td>Manual - Cash</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-warning"
-                                                                text-capitalized=""
-                                                            >
-                                                                Pending
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="even">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <span className="avatar-initial rounded-circle bg-label-warning">
-                                                                            TB
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Travus Bruntjen</span>
-                                                                    </a>
-                                                                    <small>tbruntjeni@sitemeter.com</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-desktop text-danger me-2" />
-                                                                Admin
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Enterprise</span>
-                                                        </td>
-                                                        <td>Manual - Cash</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-success"
-                                                                text-capitalized=""
-                                                            >
-                                                                Active
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="odd">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <img
-                                                                            src="../../assets/img/avatars/1.png"
-                                                                            alt="Avatar"
-                                                                            className="rounded-circle"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Stu Delamaine</span>
-                                                                    </a>
-                                                                    <small>sdelamainek@who.int</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-edit text-warning me-2" />
-                                                                Author
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Basic</span>
-                                                        </td>
-                                                        <td>Auto Debit</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-warning"
-                                                                text-capitalized=""
-                                                            >
-                                                                Pending
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="even">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <span className="avatar-initial rounded-circle bg-label-success">
-                                                                            SO
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Saunder Offner</span>
-                                                                    </a>
-                                                                    <small>soffner19@mac.com</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-user text-success me-2" />
-                                                                Maintainer
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Enterprise</span>
-                                                        </td>
-                                                        <td>Auto Debit</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-warning"
-                                                                text-capitalized=""
-                                                            >
-                                                                Pending
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="odd">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <span className="avatar-initial rounded-circle bg-label-primary">
-                                                                            SM
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Stephen MacGilfoyle</span>
-                                                                    </a>
-                                                                    <small>smacgilfoyley@bigcartel.com</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-user text-success me-2" />
-                                                                Maintainer
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Company</span>
-                                                        </td>
-                                                        <td>Manual - Paypal</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-warning"
-                                                                text-capitalized=""
-                                                            >
-                                                                Pending
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                    data-bs-toggle="dropdown"
-                                                                >
-                                                                    <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                </a>
-                                                                <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Edit
-                                                                    </a>
-                                                                    <a href="javascript:;" className="dropdown-item">
-                                                                        Suspend
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr className="even">
-                                                        <td
-                                                            className="  control"
-                                                            tabIndex={0}
-                                                            style={{ display: "none" }}
-                                                        />
-                                                        <td className="  dt-checkboxes-cell">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="dt-checkboxes form-check-input"
-                                                            />
-                                                        </td>
-                                                        <td className="sorting_1">
-                                                            <div className="d-flex justify-content-start align-items-center user-name">
-                                                                <div className="avatar-wrapper">
-                                                                    <div className="avatar avatar-sm me-4">
-                                                                        <img
-                                                                            src="../../assets/img/avatars/9.png"
-                                                                            alt="Avatar"
-                                                                            className="rounded-circle"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="d-flex flex-column">
-                                                                    <a
-                                                                        href="app-user-view-account.html"
-                                                                        className="text-heading text-truncate"
-                                                                    >
-                                                                        <span className="fw-medium">Skip Hebblethwaite</span>
-                                                                    </a>
-                                                                    <small>shebblethwaite10@arizona.edu</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-truncate d-flex align-items-center text-heading">
-                                                                <i className="bx bx-desktop text-danger me-2" />
-                                                                Admin
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="text-heading">Company</span>
-                                                        </td>
-                                                        <td>Manual - Cash</td>
-                                                        <td>
-                                                            <span
-                                                                className="badge bg-label-secondary"
-                                                                text-capitalized=""
-                                                            >
-                                                                Inactive
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <a
-                                                                    href="javascript:;"
-                                                                    className="btn btn-icon delete-record"
-                                                                >
-                                                                    <i className="bx bx-trash bx-md" />
-                                                                </a>
-                                                                <a
-                                                                    href="app-user-view-account.html"
-                                                                    className="btn btn-icon"
-                                                                >
-                                                                    <i className="bx bx-show bx-md" />
-                                                                </a>
+                                                                </Link>
                                                                 <a
                                                                     href="javascript:;"
                                                                     className="btn btn-icon dropdown-toggle hide-arrow"
@@ -2376,6 +1650,7 @@ const Userlist = () => {
                                                         </td>
                                                     </tr>
                                                 </tbody>
+                                                ))}
                                             </table>
                                             <div className="row">
                                                 <div className="col-sm-12 col-md-6">
@@ -2432,42 +1707,6 @@ const Userlist = () => {
                                                                     className="page-link"
                                                                 >
                                                                     2
-                                                                </a>
-                                                            </li>
-                                                            <li className="paginate_button page-item ">
-                                                                <a
-                                                                    href="#"
-                                                                    aria-controls="DataTables_Table_0"
-                                                                    role="link"
-                                                                    data-dt-idx={2}
-                                                                    tabIndex={0}
-                                                                    className="page-link"
-                                                                >
-                                                                    3
-                                                                </a>
-                                                            </li>
-                                                            <li className="paginate_button page-item ">
-                                                                <a
-                                                                    href="#"
-                                                                    aria-controls="DataTables_Table_0"
-                                                                    role="link"
-                                                                    data-dt-idx={3}
-                                                                    tabIndex={0}
-                                                                    className="page-link"
-                                                                >
-                                                                    4
-                                                                </a>
-                                                            </li>
-                                                            <li className="paginate_button page-item ">
-                                                                <a
-                                                                    href="#"
-                                                                    aria-controls="DataTables_Table_0"
-                                                                    role="link"
-                                                                    data-dt-idx={4}
-                                                                    tabIndex={0}
-                                                                    className="page-link"
-                                                                >
-                                                                    5
                                                                 </a>
                                                             </li>
                                                             <li
@@ -2760,4 +1999,3 @@ const Userlist = () => {
     )
 }
 
-export default Userlist

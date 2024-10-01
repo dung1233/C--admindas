@@ -1,6 +1,76 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useParams } from "react-router-dom";
+import axios from "axios";
 
 const UserAc = () => {
+    const { userId } = useParams();
+    const [user, setUser] = useState({});
+    const [formData, setFormData] = useState({});
+
+    // Fetch user details
+    const _getDetail = async () => {
+        const url = `https://projectky320240926105522.azurewebsites.net/api/User/${userId}`;
+        try {
+            const response = await axios.get(url);
+            setUser(response.data);
+
+            setFormData({
+                ...response.data,
+                dateOfBirth: response.data.dateOfBirth ? formatDate(response.data.dateOfBirth) : '',
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        _getDetail();
+    }, []);
+
+    // Format date to YYYY-MM-DD (check for invalid date)
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0]; // Return empty string if invalid date
+    };
+
+    // Handle input change
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value,
+        });
+    };
+
+    // Handle form submission
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const updateUrl = `https://projectky320240926105522.azurewebsites.net/api/User/${userId}`;
+        try {
+            const response = await axios.put(updateUrl, formData);
+            alert('User updated successfully');
+        } catch (error) {
+            if (error.response) {
+                console.log('Error Response:', error.response.data);
+
+                // Display specific validation errors if available
+                if (error.response.data.errors) {
+                    Object.keys(error.response.data.errors).forEach(key => {
+                        console.log(`${key}: ${error.response.data.errors[key].join(', ')}`);
+                    });
+                }
+                
+                alert(`Error: ${error.response.status} - ${error.response.data.title || 'Bad Request'}`);
+            } else if (error.request) {
+                console.log('Error Request:', error.request);
+                alert('No response received from server.');
+            } else {
+                console.log('Error:', error.message);
+            }
+        }
+    };
+
+
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState({
         dashboard: false,
@@ -1250,6 +1320,7 @@ const UserAc = () => {
                                     {/* User Sidebar */}
                                     <div className="col-xl-4 col-lg-5 order-1 order-md-0">
                                         {/* User Card */}
+                                        
                                         <div className="card mb-6">
                                             <div className="card-body pt-12">
                                                 <div className="user-avatar-section">
@@ -1262,8 +1333,8 @@ const UserAc = () => {
                                                             alt="User avatar"
                                                         />
                                                         <div className="user-info text-center">
-                                                            <h5>Violet Mendoza</h5>
-                                                            <span className="badge bg-label-secondary">Author</span>
+                                                            <h5>{user.name}</h5>
+                                                            <span className="badge bg-label-secondary">{user.role}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1294,13 +1365,13 @@ const UserAc = () => {
                                                 <h5 className="pb-4 border-bottom mb-4">Details</h5>
                                                 <div className="info-container">
                                                     <ul className="list-unstyled mb-6">
-                                                        <li className="mb-2">
-                                                            <span className="h6">Username:</span>
-                                                            <span>@violet.dev</span>
+                                                    <li className="mb-2">
+                                                            <span className="h6">BirthDay:</span>
+                                                            <span>{user.dateOfBirth}</span>
                                                         </li>
                                                         <li className="mb-2">
                                                             <span className="h6">Email:</span>
-                                                            <span>vafgot@vultukir.org</span>
+                                                            <span>{user.email}</span>
                                                         </li>
                                                         <li className="mb-2">
                                                             <span className="h6">Status:</span>
@@ -1308,30 +1379,38 @@ const UserAc = () => {
                                                         </li>
                                                         <li className="mb-2">
                                                             <span className="h6">Role:</span>
-                                                            <span>Author</span>
+                                                            <span>{user.role}</span>
                                                         </li>
                                                         <li className="mb-2">
-                                                            <span className="h6">Tax id:</span>
-                                                            <span>Tax-8965</span>
+                                                            <span className="h6">Phone:</span>
+                                                            <span>{user.phone}</span>
                                                         </li>
                                                         <li className="mb-2">
-                                                            <span className="h6">Contact:</span>
-                                                            <span>(123) 456-7890</span>
+                                                            <span className="h6">Shipping Adress:</span>
+                                                            <span>{user.shippingAddress}</span>
                                                         </li>
                                                         <li className="mb-2">
-                                                            <span className="h6">Languages:</span>
-                                                            <span>French</span>
+                                                            <span className="h6">Billing Adress:</span>
+                                                            <span>{user.billingAddress}</span>
                                                         </li>
                                                         <li className="mb-2">
-                                                            <span className="h6">Country:</span>
-                                                            <span>England</span>
+                                                            <span className="h6">State:</span>
+                                                            <span>{user.state}</span>
+                                                        </li>
+                                                        <li className="mb-2">
+                                                            <span className="h6">City:</span>
+                                                            <span>{user.city}</span>
+                                                        </li>
+                                                        <li className="mb-2">
+                                                            <span className="h6">Adress:</span>
+                                                            <span>{user.address}</span>
                                                         </li>
                                                     </ul>
                                                     <div className="d-flex justify-content-center">
                                                         <a
                                                             href="javascript:;"
                                                             className="btn btn-primary me-4"
-                                                            data-bs-target="#editUser"
+                                                            data-bs-target="#editUserModal"
                                                             data-bs-toggle="modal"
                                                         >
                                                             Edit
@@ -3664,367 +3743,61 @@ const UserAc = () => {
                                 </div>
                                 {/* Modal */}
                                 {/* Edit User Modal */}
-                                <div
-                                    className="modal fade"
-                                    id="editUser"
-                                    tabIndex={-1}
-                                    aria-hidden="true"
-                                >
-                                    <div className="modal-dialog modal-lg modal-simple modal-edit-user">
-                                        <div className="modal-content">
-                                            <div className="modal-body">
-                                                <button
-                                                    type="button"
-                                                    className="btn-close"
-                                                    data-bs-dismiss="modal"
-                                                    aria-label="Close"
-                                                />
-                                                <div className="text-center mb-6">
-                                                    <h4 className="mb-2">Edit User Information</h4>
-                                                    <p>Updating user details will receive a privacy audit.</p>
-                                                </div>
-                                                <form className="row g-6" onsubmit="false">
-                                                    <div className="col-12 col-md-6">
-                                                        <label
-                                                            className="form-label"
-                                                            htmlFor="modalEditUserFirstName"
-                                                        >
-                                                            First Name
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="modalEditUserFirstName"
-                                                            name="modalEditUserFirstName"
-                                                            className="form-control"
-                                                            placeholder="John"
-                                                            defaultValue="John"
-                                                        />
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserLastName">
-                                                            Last Name
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="modalEditUserLastName"
-                                                            name="modalEditUserLastName"
-                                                            className="form-control"
-                                                            placeholder="Doe"
-                                                            defaultValue="Doe"
-                                                        />
-                                                    </div>
-                                                    <div className="col-12">
-                                                        <label className="form-label" htmlFor="modalEditUserName">
-                                                            Username
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="modalEditUserName"
-                                                            name="modalEditUserName"
-                                                            className="form-control"
-                                                            placeholder="johndoe007"
-                                                            defaultValue="johndoe007"
-                                                        />
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserEmail">
-                                                            Email
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="modalEditUserEmail"
-                                                            name="modalEditUserEmail"
-                                                            className="form-control"
-                                                            placeholder="example@domain.com"
-                                                            defaultValue="example@domain.com"
-                                                        />
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserStatus">
-                                                            Status
-                                                        </label>
-                                                        <div className="position-relative">
-                                                            <select
-                                                                id="modalEditUserStatus"
-                                                                name="modalEditUserStatus"
-                                                                className="select2 form-select select2-hidden-accessible"
-                                                                aria-label="Default select example"
-                                                                data-select2-id="modalEditUserStatus"
-                                                                tabIndex={-1}
-                                                                aria-hidden="true"
-                                                            >
-                                                                <option selected="" data-select2-id={2}>
-                                                                    Status
-                                                                </option>
-                                                                <option value={1}>Active</option>
-                                                                <option value={2}>Inactive</option>
-                                                                <option value={3}>Suspended</option>
-                                                            </select>
-                                                            <span
-                                                                className="select2 select2-container select2-container--default"
-                                                                dir="ltr"
-                                                                data-select2-id={1}
-                                                                style={{ width: "auto" }}
-                                                            >
-                                                                <span className="selection">
-                                                                    <span
-                                                                        className="select2-selection select2-selection--single"
-                                                                        role="combobox"
-                                                                        aria-haspopup="true"
-                                                                        aria-expanded="false"
-                                                                        tabIndex={0}
-                                                                        aria-disabled="false"
-                                                                        aria-labelledby="select2-modalEditUserStatus-container"
-                                                                    >
-                                                                        <span
-                                                                            className="select2-selection__rendered"
-                                                                            id="select2-modalEditUserStatus-container"
-                                                                            role="textbox"
-                                                                            aria-readonly="true"
-                                                                            title="Status"
-                                                                        >
-                                                                            Status
-                                                                        </span>
-                                                                        <span
-                                                                            className="select2-selection__arrow"
-                                                                            role="presentation"
-                                                                        >
-                                                                            <b role="presentation" />
-                                                                        </span>
-                                                                    </span>
-                                                                </span>
-                                                                <span className="dropdown-wrapper" aria-hidden="true" />
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditTaxID">
-                                                            Tax ID
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="modalEditTaxID"
-                                                            name="modalEditTaxID"
-                                                            className="form-control modal-edit-tax-id"
-                                                            placeholder="123 456 7890"
-                                                            defaultValue="123 456 7890"
-                                                        />
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserPhone">
-                                                            Phone Number
-                                                        </label>
-                                                        <div className="input-group">
-                                                            <span className="input-group-text">US (+1)</span>
-                                                            <input
-                                                                type="text"
-                                                                id="modalEditUserPhone"
-                                                                name="modalEditUserPhone"
-                                                                className="form-control phone-number-mask"
-                                                                placeholder="202 555 0111"
-                                                                defaultValue="202 555 0111"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserLanguage">
-                                                            Language
-                                                        </label>
-                                                        <div className="position-relative">
-                                                            <select
-                                                                id="modalEditUserLanguage"
-                                                                name="modalEditUserLanguage"
-                                                                className="select2 form-select select2-hidden-accessible"
-                                                                multiple=""
-                                                                data-select2-id="modalEditUserLanguage"
-                                                                tabIndex={-1}
-                                                                aria-hidden="true"
-                                                            >
-                                                                <option value="">Select</option>
-                                                                <option value="english" selected="" data-select2-id={4}>
-                                                                    English
-                                                                </option>
-                                                                <option value="spanish">Spanish</option>
-                                                                <option value="french">French</option>
-                                                                <option value="german">German</option>
-                                                                <option value="dutch">Dutch</option>
-                                                                <option value="hebrew">Hebrew</option>
-                                                                <option value="sanskrit">Sanskrit</option>
-                                                                <option value="hindi">Hindi</option>
-                                                            </select>
-                                                            <span
-                                                                className="select2 select2-container select2-container--default"
-                                                                dir="ltr"
-                                                                data-select2-id={3}
-                                                                style={{ width: "auto" }}
-                                                            >
-                                                                <span className="selection">
-                                                                    <span
-                                                                        className="select2-selection select2-selection--multiple"
-                                                                        role="combobox"
-                                                                        aria-haspopup="true"
-                                                                        aria-expanded="false"
-                                                                        tabIndex={-1}
-                                                                        aria-disabled="false"
-                                                                    >
-                                                                        <ul className="select2-selection__rendered">
-                                                                            <li
-                                                                                className="select2-selection__choice"
-                                                                                title="English"
-                                                                                data-select2-id={5}
-                                                                            >
-                                                                                <span
-                                                                                    className="select2-selection__choice__remove"
-                                                                                    role="presentation"
-                                                                                >
-                                                                                    ×
-                                                                                </span>
-                                                                                English
-                                                                            </li>
-                                                                            <li className="select2-search select2-search--inline">
-                                                                                <input
-                                                                                    className="select2-search__field"
-                                                                                    type="search"
-                                                                                    tabIndex={0}
-                                                                                    autoComplete="off"
-                                                                                    autoCorrect="off"
-                                                                                    autoCapitalize="none"
-                                                                                    spellCheck="false"
-                                                                                    role="searchbox"
-                                                                                    aria-autocomplete="list"
-                                                                                    placeholder=""
-                                                                                    style={{ width: "0.75em" }}
-                                                                                />
-                                                                            </li>
-                                                                        </ul>
-                                                                    </span>
-                                                                </span>
-                                                                <span className="dropdown-wrapper" aria-hidden="true" />
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-12 col-md-6">
-                                                        <label className="form-label" htmlFor="modalEditUserCountry">
-                                                            Country
-                                                        </label>
-                                                        <div className="position-relative">
-                                                            <select
-                                                                id="modalEditUserCountry"
-                                                                name="modalEditUserCountry"
-                                                                className="select2 form-select select2-hidden-accessible"
-                                                                data-allow-clear="true"
-                                                                data-select2-id="modalEditUserCountry"
-                                                                tabIndex={-1}
-                                                                aria-hidden="true"
-                                                            >
-                                                                <option value="">Select</option>
-                                                                <option value="Australia">Australia</option>
-                                                                <option value="Bangladesh">Bangladesh</option>
-                                                                <option value="Belarus">Belarus</option>
-                                                                <option value="Brazil">Brazil</option>
-                                                                <option value="Canada">Canada</option>
-                                                                <option value="China">China</option>
-                                                                <option value="France">France</option>
-                                                                <option value="Germany">Germany</option>
-                                                                <option value="India" selected="" data-select2-id={7}>
-                                                                    India
-                                                                </option>
-                                                                <option value="Indonesia">Indonesia</option>
-                                                                <option value="Israel">Israel</option>
-                                                                <option value="Italy">Italy</option>
-                                                                <option value="Japan">Japan</option>
-                                                                <option value="Korea">Korea, Republic of</option>
-                                                                <option value="Mexico">Mexico</option>
-                                                                <option value="Philippines">Philippines</option>
-                                                                <option value="Russia">Russian Federation</option>
-                                                                <option value="South Africa">South Africa</option>
-                                                                <option value="Thailand">Thailand</option>
-                                                                <option value="Turkey">Turkey</option>
-                                                                <option value="Ukraine">Ukraine</option>
-                                                                <option value="United Arab Emirates">
-                                                                    United Arab Emirates
-                                                                </option>
-                                                                <option value="United Kingdom">United Kingdom</option>
-                                                                <option value="United States">United States</option>
-                                                            </select>
-                                                            <span
-                                                                className="select2 select2-container select2-container--default"
-                                                                dir="ltr"
-                                                                data-select2-id={6}
-                                                                style={{ width: "auto" }}
-                                                            >
-                                                                <span className="selection">
-                                                                    <span
-                                                                        className="select2-selection select2-selection--single"
-                                                                        role="combobox"
-                                                                        aria-haspopup="true"
-                                                                        aria-expanded="false"
-                                                                        tabIndex={0}
-                                                                        aria-disabled="false"
-                                                                        aria-labelledby="select2-modalEditUserCountry-container"
-                                                                    >
-                                                                        <span
-                                                                            className="select2-selection__rendered"
-                                                                            id="select2-modalEditUserCountry-container"
-                                                                            role="textbox"
-                                                                            aria-readonly="true"
-                                                                            title="India"
-                                                                        >
-                                                                            <span
-                                                                                className="select2-selection__clear"
-                                                                                title="Remove all items"
-                                                                                data-select2-id={8}
-                                                                            >
-                                                                                ×
-                                                                            </span>
-                                                                            India
-                                                                        </span>
-                                                                        <span
-                                                                            className="select2-selection__arrow"
-                                                                            role="presentation"
-                                                                        >
-                                                                            <b role="presentation" />
-                                                                        </span>
-                                                                    </span>
-                                                                </span>
-                                                                <span className="dropdown-wrapper" aria-hidden="true" />
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-12">
-                                                        <div className="form-check form-switch my-2 ms-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="form-check-input"
-                                                                id="editBillingAddress"
-                                                                defaultChecked=""
-                                                            />
-                                                            <label
-                                                                htmlFor="editBillingAddress"
-                                                                className="switch-label"
-                                                            >
-                                                                Use as a billing address?
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-12 text-center">
-                                                        <button type="submit" className="btn btn-primary me-3">
-                                                            Submit
-                                                        </button>
-                                                        <button
-                                                            type="reset"
-                                                            className="btn btn-label-secondary"
-                                                            data-bs-dismiss="modal"
-                                                            aria-label="Close"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
+                               <div className="modal fade" id="editUserModal" tabIndex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title" id="editUserModalLabel">Edit User</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label htmlFor="name" className="form-label">Name</label>
+                                    <input type="text" className="form-control" id="name" name="name" value={formData.name || ''} onChange={handleInputChange} />
                                 </div>
+                                <div className="mb-3">
+                                    <label htmlFor="role" className="form-label">Role</label>
+                                    <input type="text" className="form-control" id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="dateOfBirth" className="form-label">Date of Birth</label>
+                                    <input type="date" className="form-control" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="email" className="form-label">Email</label>
+                                    <input type="email" className="form-control" id="email" name="email" value={formData.email || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="phone" className="form-label">Phone</label>
+                                    <input type="text" className="form-control" id="phone" name="phone" value={formData.phone || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="shippingAdress" className="form-label">Shipping Address</label>
+                                    <input type="text" className="form-control" id="shippingAddress" name="shippingAddress" value={formData.shippingAddress || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="billingAdress" className="form-label">Billing Address</label>
+                                    <input type="text" className="form-control" id="billingAddress" name="billingAddress" value={formData.billingAddress || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="state" className="form-label">State</label>
+                                    <input type="text" className="form-control" id="state" name="state" value={formData.state || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="city" className="form-label">City</label>
+                                    <input type="text" className="form-control" id="city" name="city" value={formData.city || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="adress" className="form-label">Address</label>
+                                    <input type="text" className="form-control" id="address" name="address" value={formData.address || ''} onChange={handleInputChange} />
+                                </div>
+                                <button type="submit" className="btn btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
                                 {/*/ Edit User Modal */}
                                 {/* Add New Credit Card Modal */}
                                 <div

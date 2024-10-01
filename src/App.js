@@ -13,7 +13,9 @@ import Chat from './compoment/pages/Chat';
 import Userlist from './compoment/pages/User/Userlist';
 import UserAc from './compoment/pages/User/UserAc';
 import Invoice from './compoment/pages/User/Invoice';
-import Customer from './compoment/pages/User/Customer'
+import Customer from './compoment/pages/User/Customer';
+import Producdetails from './compoment/pages/Products/Productdetails';
+import Checkout from './compoment/pages/Checkout';
 const App = () => {
   return (
     <Router>
@@ -31,9 +33,12 @@ const App = () => {
         <Route path='/Review' element={<Review />} />
         <Route path='/Chat' element={<Chat />} />
         <Route path='/Userlist' element={<Userlist />} />
-        <Route path='/UserAc' element={<UserAc />} />
+        <Route path='/UserAc/:userId' element={<UserAc />} />
         <Route path='/Invoice' element={<Invoice />} />
         <Route path='/Customer' element={<Customer />} />
+        <Route path='/Productdetails' element={<Producdetails />} />
+        <Route path='/checkout' element={<Checkout />} />
+
       </Routes>
     </Router>
   )
