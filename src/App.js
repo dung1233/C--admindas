@@ -16,6 +16,7 @@ import Invoice from './compoment/pages/User/Invoice';
 import Customer from './compoment/pages/User/Customer';
 import Producdetails from './compoment/pages/Products/Productdetails';
 import Checkout from './compoment/pages/Checkout';
+import Addvariant from './compoment/pages/Products/Addvariant';
 const App = () => {
   return (
     <Router>
@@ -38,7 +39,7 @@ const App = () => {
         <Route path='/Customer' element={<Customer />} />
         <Route path='/Productdetails' element={<Producdetails />} />
         <Route path='/checkout' element={<Checkout />} />
-
+        <Route path='/Addvariant' element={<Addvariant/>} />
       </Routes>
     </Router>
   )

@@ -18,43 +18,54 @@ const Addproduct = () => {
       order: false
     };
   });
-  const [vendorOptions, setVendorOptions] = useState([]);
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [collectionOptions, setCollectionOptions] = useState([]);
-  const [statusOptions, setStatusOptions] = useState([]);
-
   const [productTitle, setProductTitle] = useState('');
   const [productSku, setProductSku] = useState('');
   const [productPrice, setProductPrice] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState(null); // State for the image file
-
+  const [imagePreview, setImagePreview] = useState(null);
+  const [image, setImage] = useState(null);
+  const [imageURL, setImageURL] = useState('');
+  const [vendorOptions, setVendorOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [collectionOptions, setCollectionOptions] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
+  // Hàm xử lý thay đổi file ảnh
   const handleFileChange = (e) => {
-    setImage(e.target.files[0]); // Set the selected image
-  };
+    const file = e.target.files[0];
 
+    // Sử dụng FileReader để đọc file ảnh
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result); // Lưu URL ảnh để hiển thị trước
+    };
+    if (file) {
+      reader.readAsDataURL(file); // Đọc file ảnh
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Create FormData to include text and file data
-    const formData = new FormData();
-    formData.append('title', productTitle);
-    formData.append('slug', productSku);
-    formData.append('price', productPrice);
-    formData.append('description', description);
-
-    // Append image file if selected
-    if (image) {
-      formData.append('image', image);
-    }
+    // Chuẩn bị dữ liệu JSON
+    const productData = {
+      name: productTitle,
+      slug: productSku,
+      description: description,
+      price: productPrice,
+      image: imageURL, // URL của ảnh đã upload (sau khi upload)
+      categoryId: category.value, // Lấy ID từ danh mục đã chọn
+      brandId: vendor.value, // Lấy ID từ brand đã chọn
+      colorId: collection.value, // Lấy ID từ màu đã chọn
+      sizeId: status.value, // Lấy ID từ kích cỡ đã chọn
+      // Các trường khác nếu cần
+    };
 
     try {
       const response = await axios.post(
-        'https://projectky320240926105522.azurewebsites.net/api/Product/{id}',
-        formData,
+        'https://projectky320240926105522.azurewebsites.net/api/Product',
+        productData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -63,6 +74,7 @@ const Addproduct = () => {
       console.error('Error adding product:', error);
     }
   };
+
   const fetchBrands = async () => {
     try {
       const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Brand');
@@ -1344,27 +1356,27 @@ const Addproduct = () => {
                       <div className="col-12 col-lg-8">
                         <div className="card mb-6">
                           <div className="card-header">
-                            <h5 className="card-title mb-0">Product Information</h5>
+                            <h5 className="card-title mb-0">Thông tin sản phẩm</h5>
                           </div>
                           <div className="card-body">
-                            {/* Name */}
+                            {/* Tên sản phẩm */}
                             <div className="mb-6">
                               <label className="form-label" htmlFor="ecommerce-product-name">
-                                Name
+                                Tên sản phẩm
                               </label>
                               <input
                                 type="text"
                                 className="form-control"
                                 id="ecommerce-product-name"
-                                placeholder="Product title"
+                                placeholder="Tên sản phẩm"
                                 name="productTitle"
-                                aria-label="Product title"
+                                aria-label="Tên sản phẩm"
                                 value={productTitle}
                                 onChange={(e) => setProductTitle(e.target.value)}
                               />
                             </div>
 
-                            {/* Slug and Price */}
+                            {/* Slug và Giá */}
                             <div className="row mb-6">
                               <div className="col">
                                 <label className="form-label" htmlFor="ecommerce-product-sku">
@@ -1383,13 +1395,13 @@ const Addproduct = () => {
                               </div>
                               <div className="col">
                                 <label className="form-label" htmlFor="ecommerce-product-barcode">
-                                  Price
+                                  Giá
                                 </label>
                                 <input
                                   type="text"
                                   className="form-control"
                                   id="ecommerce-product-barcode"
-                                  placeholder="$"
+                                  placeholder="Giá"
                                   name="productBarcode"
                                   aria-label="Product barcode"
                                   value={productPrice}
@@ -1398,25 +1410,22 @@ const Addproduct = () => {
                               </div>
                             </div>
 
-                            {/* Description */}
+                            {/* Mô tả */}
                             <div>
-                              <label className="mb-1">Description (Optional)</label>
+                              <label className="mb-1">Mô tả (không bắt buộc)</label>
                               <ReactQuill
                                 theme="snow"
                                 value={description}
                                 onChange={setDescription}
-                                placeholder="Product Description"
+                                placeholder="Mô tả sản phẩm"
                                 className="comment-editor border-0 pb-6"
                               />
                             </div>
 
-                            {/* Image Upload */}
+                            {/* Upload Ảnh */}
                             <div className="card mb-6">
                               <div className="card-header d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0 card-title">Product Image</h5>
-                                <a href="javascript:void(0);" className="fw-medium">
-                                  Add media from URL
-                                </a>
+                                <h5 className="mb-0 card-title">Ảnh sản phẩm</h5>
                               </div>
                               <div className="card-body">
                                 <input
@@ -1428,130 +1437,124 @@ const Addproduct = () => {
                               </div>
                             </div>
 
-                            {/* Submit Button */}
-                            <div className="mt-4">
-                              <button type="submit" className="btn btn-primary">
-                                Add Product
-                              </button>
-                            </div>
+                            {/* Nút Submit */}
+                            
                           </div>
                         </div>
                       </div>
-                    </form>
-                    {/* /Second column */}
-                    {/* Second column */}
-                    <div className="col-12 col-lg-4">
-                      {/* Pricing Card */}
 
-                      {/* /Pricing Card */}
-                      {/* Organize Card */}
-                      <div className="mb-6">
-                        <label className="form-label mb-1">Brand</label>
-                        <Select
-                          options={vendorOptions}
-                          value={vendor}
-                          onChange={setVendor}
-                          placeholder="Select Vendor"
-                        />
-                      </div>
-
-                      <div className="d-flex justify-content-between align-items-center">
+                      {/* Second column */}
+                      <div className="col-12 col-lg-4">
+                        {/* Select Brand */}
                         <div className="mb-6">
-                          <label className="form-label mb-1">Category</label>
+                          <label className="form-label mb-1">Brand</label>
                           <Select
-                            options={categoryOptions}
-                            value={category}
-                            onChange={setCategory}
-                            placeholder="Select Category"
+                            options={vendorOptions}
+                            value={vendor}
+                            onChange={setVendor}
+                            placeholder="Select Vendor"
                           />
                         </div>
-                        <button className="fw-medium btn btn-icon btn-label-primary ms-4">
-                          <i className="bx bx-plus bx-md"></i>
-                        </button>
-                      </div>
 
-                      <div className="mb-6">
-                        <label className="form-label mb-1">Color</label>
-                        <Select
-                          options={collectionOptions}
-                          value={collection}
-                          onChange={setCollection}
-                          placeholder="Color"
-                        />
-                      </div>
+                        {/* Select Category */}
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="mb-6">
+                            <label className="form-label mb-1">Category</label>
+                            <Select
+                              options={categoryOptions}
+                              value={category}
+                              onChange={setCategory}
+                              placeholder="Select Category"
+                            />
+                          </div>
+                        </div>
 
-                      <div className="mb-6">
-                        <label className="form-label mb-1">Size</label>
-                        <Select
-                          options={statusOptions}
-                          value={status}
-                          onChange={setStatus}
-                          placeholder="Size"
-                        />
-                      </div>
+                        {/* Select Color */}
+                        <div className="mb-6">
+                          <label className="form-label mb-1">Color</label>
+                          <Select
+                            options={collectionOptions}
+                            value={collection}
+                            onChange={setCollection}
+                            placeholder="Color"
+                          />
+                        </div>
 
-                      {/* /Organize Card */}
-                    </div>
-                    {/* /Second column */}
+                        {/* Select Size */}
+                        <div className="mb-6">
+                          <label className="form-label mb-1">Size</label>
+                          <Select
+                            options={statusOptions}
+                            value={status}
+                            onChange={setStatus}
+                            placeholder="Size"
+                          />
+                        </div>
+                      </div>
+                      
+                    </form>
+
+                    {/* /Organize Card */}
+                  </div>
+                  {/* /Second column */}
+                </div>
+              </div>
+            </div>
+            {/* / Content */}
+            {/* Footer */}
+            <footer className="content-footer footer bg-footer-theme">
+              <div className="container-xxl">
+                <div className="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+                  <div className="text-body">
+                    © 2024, made with ❤️ by{" "}
+                    <a
+                      href="https://themeselection.com"
+                      target="_blank"
+                      className="footer-link"
+                    >
+                      ThemeSelection
+                    </a>
+                  </div>
+                  <div className="d-none d-lg-inline-block">
+                    <a
+                      href="https://themeselection.com/license/"
+                      className="footer-link me-4"
+                      target="_blank"
+                    >
+                      License
+                    </a>
+                    <a
+                      href="https://themeselection.com/"
+                      target="_blank"
+                      className="footer-link me-4"
+                    >
+                      More Themes
+                    </a>
+                    <a
+                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/"
+                      target="_blank"
+                      className="footer-link me-4"
+                    >
+                      Documentation
+                    </a>
+                    <a
+                      href="https://themeselection.com/support/"
+                      target="_blank"
+                      className="footer-link d-none d-sm-inline-block"
+                    >
+                      Support
+                    </a>
                   </div>
                 </div>
               </div>
-              {/* / Content */}
-              {/* Footer */}
-              <footer className="content-footer footer bg-footer-theme">
-                <div className="container-xxl">
-                  <div className="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
-                    <div className="text-body">
-                      © 2024, made with ❤️ by{" "}
-                      <a
-                        href="https://themeselection.com"
-                        target="_blank"
-                        className="footer-link"
-                      >
-                        ThemeSelection
-                      </a>
-                    </div>
-                    <div className="d-none d-lg-inline-block">
-                      <a
-                        href="https://themeselection.com/license/"
-                        className="footer-link me-4"
-                        target="_blank"
-                      >
-                        License
-                      </a>
-                      <a
-                        href="https://themeselection.com/"
-                        target="_blank"
-                        className="footer-link me-4"
-                      >
-                        More Themes
-                      </a>
-                      <a
-                        href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/"
-                        target="_blank"
-                        className="footer-link me-4"
-                      >
-                        Documentation
-                      </a>
-                      <a
-                        href="https://themeselection.com/support/"
-                        target="_blank"
-                        className="footer-link d-none d-sm-inline-block"
-                      >
-                        Support
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </footer>
-              {/* / Footer */}
-              <div className="content-backdrop fade" />
-            </div>
-            {/* Content wrapper */}
+            </footer>
+            {/* / Footer */}
+            <div className="content-backdrop fade" />
           </div>
-
-
+          {/* Content wrapper */}
         </div>
+
+
       </div>
     </div>
   )
