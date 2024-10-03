@@ -1,21 +1,10 @@
-import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Select from 'react-select';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-
-const Producdetails = () => {
+function EditProductVariant() {
   const menuRef = useRef(null);
-  const location = useLocation();
-  console.log('Location state:', location.state); // Lấy dữ liệu được truyền từ state
-  const { request } = location.state || {};
-  const productId = request?.productId;
-  console.log('Request:', request);
-  console.log('ProductId:', productId);
-  const name = request && request.name ? request.name : 'Default Name';
-  console.log('Request:', name);
-  const [productVariants, setProductVariants] = useState([]);
   const [menuState, setMenuState] = useState(() => {
     // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
     const savedMenuState = localStorage.getItem('menuState');
@@ -28,56 +17,39 @@ const Producdetails = () => {
       order: false
     };
   });
-  // Nhận `request`
-  const handleEditClick = (variant) => {
-    // Kiểm tra dữ liệu của biến thể được truyền khi nhấn nút "Edit"
-    console.log('Dữ liệu biến thể được chọn:', variant);
-
-    // Điều hướng đến trang chỉnh sửa với dữ liệu của variant được chọn
-    navigate("/Editproduct", { state: { variantData: variant } });
-  };
-
-  // Khởi tạo navigate sau khi import useNavigate từ 'react-router-dom'
+  const location = useLocation();
   const navigate = useNavigate();
+  const variantData = location.state?.variantData;
+  const [productTitle, setProductTitle] = useState('');
+  const [productSku, setProductSku] = useState('');
+  const [description, setDescription] = useState('');
+  const [productPrice, setProductPrice] = useState('');
+  const [imageURL, setImageURL] = useState('');
+  const [category, setCategory] = useState(null);
+  const [vendor, setVendor] = useState(null);
+  // State cho form biến thể
+  const [collection, setCollection] = useState(null); // Color
+  const [status, setStatus] = useState(null); // Size
+  const [stockQuantity, setStockQuantity] = useState(0);
 
+  // State cho options trong dropdown
+  const [collectionOptions, setCollectionOptions] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
 
-
-
-
-  // Hàm gọi API để lấy `productVariants`
-  const fetchProductVariants = async () => {
-    try {
-      // Gọi API để lấy tất cả `productVariants`
-      const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/ProductVariant');
-      if (response.status === 200) {
-        
-
-        // Lọc các biến thể dựa trên `productId` của sản phẩm hiện tại
-        const variantsForCurrentProduct = response.data.filter(
-          (variant) => variant.productId === request.productId
-        );
-
-        // Lưu các biến thể lọc được vào state
-        setProductVariants(variantsForCurrentProduct);
-      }
-    } catch (error) {
-      console.error('Lỗi khi gọi API productVariants:', error);
-    }
-  };
-
-  // Sử dụng `useEffect` để gọi `fetchProductVariants`
+  // Lấy dữ liệu từ biến thể khi chỉnh sửa
   useEffect(() => {
-    console.log('Checking request before fetch:', request);
-    // Kiểm tra nếu có `productId` thì mới gọi API
-    if (request && request.productId) {
-      fetchProductVariants();
+    if (variantData) {
+      setCollection({ value: variantData.color.colorId, label: variantData.color.colorName });
+      setStatus({ value: variantData.size.sizeId, label: variantData.size.sizeName });
+      setStockQuantity(variantData.stockQuantity);
     }
-  }, [request.productId]);
+  }, [variantData]);
 
-
-
-
-  // Hàm xử lý toggle cho từng menu
+  // Fetch options cho dropdown từ API
+  useEffect(() => {
+    fetchColors();
+    fetchSizes();
+  }, []);
   const handleMenuToggle = (menuName) => {
     setMenuState((prevState) => {
       const newState = {
@@ -89,45 +61,89 @@ const Producdetails = () => {
       return newState;
     });
   };
+  
+  
 
-  useEffect(() => {
-    const menuInner = menuRef.current;
 
-    // Kiểm tra nếu nội dung vượt quá chiều cao của container
-    if (menuInner.scrollHeight > menuInner.clientHeight) {
-      menuInner.style.overflowY = 'auto';
-    } else {
-      menuInner.style.overflowY = 'hidden';
+  const fetchColors = async () => {
+    try {
+      const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Color');
+      const options = response.data.map((color) => ({
+        value: color.colorId,
+        label: color.colorName,
+      }));
+      setCollectionOptions(options);
+    } catch (error) {
+      console.error('Error fetching colors:', error);
     }
+  };
 
-    // Lấy vị trí cuộn từ localStorage và đặt lại
-    const savedScrollPosition = localStorage.getItem('menuScrollPosition');
-    if (savedScrollPosition) {
-      menuInner.scrollTop = parseInt(savedScrollPosition, 10);
+  const fetchSizes = async () => {
+    try {
+      const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Size');
+      const options = response.data.map((size) => ({
+        value: size.sizeId,
+        label: size.sizeName,
+      }));
+      setStatusOptions(options);
+    } catch (error) {
+      console.error('Error fetching sizes:', error);
     }
+  };
 
-    // Lưu vị trí cuộn trước khi trang được tải lại
-    const handleBeforeUnload = () => {
-      localStorage.setItem('menuScrollPosition', menuInner.scrollTop);
+  // Xử lý cập nhật dữ liệu khi nhấn "Save Changes"
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Form submitted');
+
+    // Tạo dữ liệu cần cập nhật cho biến thể
+    const variantDataToUpdate = {
+      variantId: variantData.variantId,
+      productId: variantData.product.productId,
+      colorId: collection.value,
+      sizeId: status.value,
+      stockQuantity: parseInt(stockQuantity, 10), // Chuyển đổi về số nguyên
     };
+    console.log('Data to send:', variantDataToUpdate);
 
-    const handleResize = () => {
-      if (menuInner.scrollHeight > menuInner.clientHeight) {
-        menuInner.style.overflowY = 'auto';
-      } else {
-        menuInner.style.overflowY = 'hidden';
+    try {
+      // Gửi yêu cầu cập nhật biến thể
+      const response = await axios.put(
+        `https://projectky320240926105522.azurewebsites.net/api/ProductVariant/${variantData.variantId}`, // Sử dụng `variantId` để cập nhật biến thể
+        variantDataToUpdate,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Response from server:', response);
+      console.log('Response status:', response.status);
+
+      if (response.status === 200 || response.status === 204) {
+        console.log('Variant updated successfully:', response.data);
+
+        // Reset các state để xóa text vừa chỉnh sửa
+        setProductTitle('');
+        setProductSku('');
+        setDescription('');
+        setProductPrice('');
+        setImageURL('');
+        setCategory(null);
+        setVendor(null);
+        setCollection(null);
+        setStatus(null);
+
+        // Sau khi reset state, reload lại trang để cập nhật mới nhất
+        navigate('/Product');
       }
-    };
+    } catch (error) {
+      console.error('Error updating variant:', error.response?.data || error.message);
+    }
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('beforeunload', handleBeforeUnload);
+  };
 
-    // Cleanup event listener
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
   return (
     <div className="layout-wrapper layout-content-navbar">
       <div className="layout-container">
@@ -268,7 +284,7 @@ const Producdetails = () => {
                 </div>
               </a>
               <ul className="menu-sub">
-                <li className="menu-item">
+                <li className="menu-item ">
                   <a href="app-ecommerce-dashboard.html" className="menu-link">
                     <div className="text-truncate" data-i18n="Dashboard">
                       Dashboard
@@ -289,7 +305,7 @@ const Producdetails = () => {
                         </div>
                       </a>
                     </li>
-                    <li className="menu-item">
+                    <li className="menu-item ">
                       <a href="/Addproduct" className="menu-link">
                         <div className="text-truncate" data-i18n="Add Product">
                           Add Product
@@ -297,6 +313,13 @@ const Producdetails = () => {
                       </a>
                     </li>
                     <li className="menu-item active">
+                                                <a href="/Editproduct" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Add Product">
+                                                        Edit Product
+                                                    </div>
+                                                </a>
+                                            </li>
+                    <li className="menu-item">
                       <a href="/Catenorylist" className="menu-link">
                         <div className="text-truncate" data-i18n="Category List">
                           Category List
@@ -1230,404 +1253,124 @@ const Producdetails = () => {
           <div className="content-wrapper">
             {/* Content */}
             <div className="container-xxl flex-grow-1 container-p-y">
-              <div className="row invoice-preview">
-                {/* Invoice */}
-                <div className="col-xl-9 col-md-8 col-12 mb-md-0 mb-6">
-                  <div className="card invoice-preview-card p-sm-12 p-6">
-                    <div className="card-body invoice-preview-header rounded">
-                      <div className="d-flex justify-content-between flex-xl-row flex-md-column flex-sm-row flex-column align-items-xl-center align-items-md-start align-items-sm-center align-items-start">
-                        <div className="mb-xl-0 mb-6 text-heading">
-                          <img
-                            src={request.image}
-                            alt="Product-9"
-                            className="rounded"
-                            style={{
-                              width: '350px',
-                              height: '250px',
-                              objectFit: 'cover',
-                              borderRadius: '10px',
-
-                              // Bo tròn góc
-                              border: '2px solid #ccc' // Đường viền màu xám
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <h5 className="mb-6">{request.name}</h5>
-                          <div className="mb-1 text-heading" style={{
-                            width: '450px',
-                            height: '170px',
-
-
-
-                          }}>
-                            <span>Description:</span>
-                            <span className="fw-medium" tyle={{
-
-
-                            }}>{request.description}</span>
-                          </div>
-                          <div className="text-heading">
-                            <span>Category: </span>
-                            <span className="fw-medium">{request.category.name}</span>
-                          </div>
-                          <div className="text-heading">
-                            <span>Brand: </span>
-                            <span className="fw-medium">{request.brand.name}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="card-body px-0">
-                      <div className="row">
-
-                      </div>
-                    </div>
-                    <div className="table-responsive border border-bottom-0 border-top-0 rounded">
-
-                      {/* Hiển thị bảng các biến thể */}
-                      {productVariants.length > 0 ? (
-                        <div>
-                          <h4>All Product:</h4>
-                          <table className="table">
-                            <thead>
-                              <tr>
-                                <th>Product </th>
-                                <th>color</th>
-                                <th>Size</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {productVariants.map((variant, index) => (
-                                <tr key={variant.variantId || index}>
-                                  <td>Product {variant.variantId}</td>
-                                  <td>{variant.color.colorName}</td>
-                                  <td>{variant.size.sizeName}</td>
-                                  <td>{variant.stockQuantity}</td>
-                                  <td>${request.price}</td> {/* Hiển thị giá từ sản phẩm chính */}
-                                  <td>
-                                    <button onClick={() => handleEditClick(variant)}>Edit</button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <p>Không có biến thể nào cho sản phẩm này.</p>
-                      )}
-                    </div>
-
-                    <hr className="mt-0 mb-6" />
-                    <div className="card-body p-0">
-                      <div className="row">
-                        <div className="col-12">
-                          <span className="fw-medium text-heading">Note:</span>
-                          <span>
-                            It was a pleasure working with you and your team. We hope
-                            you will keep us in mind for future freelance projects.
-                            Thank You!
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+              <div className="app-ecommerce">
+                {/* Add Product */}
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-6 row-gap-4">
+                  <div className="d-flex flex-column justify-content-center">
+                    <h4 className="mb-1">Edit</h4>
+                    <p className="mb-0"> ProductVariant</p>
+                  </div>
+                  <div className="d-flex align-content-center flex-wrap gap-4">
+                    
                   </div>
                 </div>
-                {/* /Invoice */}
-                {/* Invoice Actions */}
-                <div className="col-xl-3 col-md-4 col-12 invoice-actions">
-                  <div className="card">
-                    <div className="card-body">
-                      <button
-                        className="btn btn-primary d-grid w-100 mb-4"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#sendInvoiceOffcanvas"
-                      >
-                        <span className="d-flex align-items-center justify-content-center text-nowrap">
-                          <i className="bx bx-paper-plane bx-sm me-2" />
-                          Send Invoice
-                        </span>
-                      </button>
-                      <button className="btn btn-label-secondary d-grid w-100 mb-4">
-                        Download
-                      </button>
-                      <div className="d-flex mb-4">
-                        <a
-                          className="btn btn-label-secondary d-grid w-100 me-4"
-                          target="_blank"
-                          href="./app-invoice-print.html"
-                        >
-                          Print
-                        </a>
-                        <Link to={{ pathname: "/Editproduct" }} state={{ productData: request }} className="btn btn-label-secondary d-grid w-100">Edit</Link>
-                      </div>
-                      <button
-                        className="btn btn-success d-grid w-100"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#addPaymentOffcanvas"
-                      >
-                        <span className="d-flex align-items-center justify-content-center text-nowrap">
-                          <i className="bx bx-dollar bx-sm me-2" />
-                          Add Payment
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                {/* /Invoice Actions */}
-              </div>
-              {/* Offcanvas */}
-              {/* Send Invoice Sidebar */}
-              <div
-                className="offcanvas offcanvas-end"
-                id="sendInvoiceOffcanvas"
-                aria-hidden="true"
-              >
-                <div className="offcanvas-header mb-6 border-bottom">
-                  <h5 className="offcanvas-title">Send Invoice</h5>
-                  <button
-                    type="button"
-                    className="btn-close text-reset"
-                    data-bs-dismiss="offcanvas"
-                    aria-label="Close"
-                  />
-                </div>
-                <div className="offcanvas-body pt-0 flex-grow-1">
-                  <form>
+                <div className="row">
+                  {/* First column*/}
+                  <form onSubmit={handleSubmit}>
+                    {/* Select Color */}
                     <div className="mb-6">
-                      <label htmlFor="invoice-from" className="form-label">
-                        From
-                      </label>
+                      <label className="form-label mb-1">Color</label>
+                      <Select
+                        options={collectionOptions}
+                        value={collection}
+                        onChange={setCollection}
+                        placeholder="Select Color"
+                      />
+                    </div>
+
+                    {/* Select Size */}
+                    <div className="mb-6">
+                      <label className="form-label mb-1">Size</label>
+                      <Select
+                        options={statusOptions}
+                        value={status}
+                        onChange={setStatus}
+                        placeholder="Select Size"
+                      />
+                    </div>
+
+                    {/* Stock Quantity */}
+                    <div className="mb-6">
+                      <label className="form-label mb-1">Stock Quantity</label>
                       <input
-                        type="text"
+                        type="number"
                         className="form-control"
-                        id="invoice-from"
-                        defaultValue="shelbyComapny@email.com"
-                        placeholder="company@email.com"
+                        value={stockQuantity}
+                        onChange={(e) => setStockQuantity(e.target.value)}
                       />
                     </div>
-                    <div className="mb-6">
-                      <label htmlFor="invoice-to" className="form-label">
-                        To
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="invoice-to"
-                        defaultValue="qConsolidated@email.com"
-                        placeholder="company@email.com"
-                      />
-                    </div>
-                    <div className="mb-6">
-                      <label htmlFor="invoice-subject" className="form-label">
-                        Subject
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="invoice-subject"
-                        defaultValue="Invoice of purchased Admin Templates"
-                        placeholder="Invoice regarding goods"
-                      />
-                    </div>
-                    <div className="mb-6">
-                      <label htmlFor="invoice-message" className="form-label">
-                        Message
-                      </label>
-                      <textarea
-                        className="form-control"
-                        name="invoice-message"
-                        id="invoice-message"
-                        cols={3}
-                        rows={8}
-                        defaultValue={
-                          "Dear Queen Consolidated,\n          Thank you for your business, always a pleasure to work with you!\n          We have generated a new invoice in the amount of $95.59\n          We would appreciate payment of this invoice by 05/11/2021"
-                        }
-                      />
-                    </div>
-                    <div className="mb-6">
-                      <span className="badge bg-label-primary">
-                        <i className="bx bx-link bx-xs" />
-                        <span className="align-middle">Invoice Attached</span>
-                      </span>
-                    </div>
-                    <div className="mb-6 d-flex flex-wrap">
-                      <button
-                        type="button"
-                        className="btn btn-primary me-4"
-                        data-bs-dismiss="offcanvas"
-                      >
-                        Send
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-label-secondary"
-                        data-bs-dismiss="offcanvas"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+
+                    {/* Nút Submit */}
+                    <button type="submit" className="btn btn-primary">Save Changes</button>
                   </form>
+
+                  {/* /Organize Card */}
                 </div>
+                {/* /Second column */}
               </div>
-              {/* /Send Invoice Sidebar */}
-              {/* Add Payment Sidebar */}
-              <div
-                className="offcanvas offcanvas-end"
-                id="addPaymentOffcanvas"
-                aria-hidden="true"
-              >
-                <div className="offcanvas-header border-bottom">
-                  <h5 className="offcanvas-title">Add Payment</h5>
-                  <button
-                    type="button"
-                    className="btn-close text-reset"
-                    data-bs-dismiss="offcanvas"
-                    aria-label="Close"
-                  />
-                </div>
-                <div className="offcanvas-body flex-grow-1">
-                  <div className="d-flex justify-content-between bg-lighter p-2 mb-4">
-                    <p className="mb-0">Invoice Balance:</p>
-                    <p className="fw-medium mb-0">$5000.00</p>
-                  </div>
-                  <form>
-                    <div className="mb-6">
-                      <label className="form-label" htmlFor="invoiceAmount">
-                        Payment Amount
-                      </label>
-                      <div className="input-group">
-                        <span className="input-group-text">$</span>
-                        <input
-                          type="text"
-                          id="invoiceAmount"
-                          name="invoiceAmount"
-                          className="form-control invoice-amount"
-                          placeholder={100}
-                        />
-                      </div>
-                    </div>
-                    <div className="mb-6">
-                      <label className="form-label" htmlFor="payment-date">
-                        Payment Date
-                      </label>
-                      <input
-                        id="payment-date"
-                        className="form-control invoice-date flatpickr-input"
-                        type="text"
-                        readOnly="readonly"
-                      />
-                    </div>
-                    <div className="mb-6">
-                      <label className="form-label" htmlFor="payment-method">
-                        Payment Method
-                      </label>
-                      <select className="form-select" id="payment-method">
-                        <option value="" selected="" disabled="">
-                          Select payment method
-                        </option>
-                        <option value="Cash">Cash</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                        <option value="Debit Card">Debit Card</option>
-                        <option value="Credit Card">Credit Card</option>
-                        <option value="Paypal">Paypal</option>
-                      </select>
-                    </div>
-                    <div className="mb-6">
-                      <label className="form-label" htmlFor="payment-note">
-                        Internal Payment Note
-                      </label>
-                      <textarea
-                        className="form-control"
-                        id="payment-note"
-                        rows={2}
-                        defaultValue={""}
-                      />
-                    </div>
-                    <div className="mb-6 d-flex flex-wrap">
-                      <button
-                        type="button"
-                        className="btn btn-primary me-4"
-                        data-bs-dismiss="offcanvas"
-                      >
-                        Send
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-label-secondary"
-                        data-bs-dismiss="offcanvas"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              {/* /Add Payment Sidebar */}
-              {/* /Offcanvas */}
             </div>
-            {/* / Content */}
-            {/* Footer */}
-            <footer className="content-footer footer bg-footer-theme">
-              <div className="container-xxl">
-                <div className="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
-                  <div className="text-body">
-                    © 2024, made with ❤️ by{" "}
-                    <a
-                      href="https://themeselection.com"
-                      target="_blank"
-                      className="footer-link"
-                    >
-                      ThemeSelection
-                    </a>
-                  </div>
-                  <div className="d-none d-lg-inline-block">
-                    <a
-                      href="https://themeselection.com/license/"
-                      className="footer-link me-4"
-                      target="_blank"
-                    >
-                      License
-                    </a>
-                    <a
-                      href="https://themeselection.com/"
-                      target="_blank"
-                      className="footer-link me-4"
-                    >
-                      More Themes
-                    </a>
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/"
-                      target="_blank"
-                      className="footer-link me-4"
-                    >
-                      Documentation
-                    </a>
-                    <a
-                      href="https://themeselection.com/support/"
-                      target="_blank"
-                      className="footer-link d-none d-sm-inline-block"
-                    >
-                      Support
-                    </a>
-                  </div>
+          </div>
+          {/* / Content */}
+          {/* Footer */}
+          <footer className="content-footer footer bg-footer-theme">
+            <div className="container-xxl">
+              <div className="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+                <div className="text-body">
+                  © 2024, made with ❤️ by{" "}
+                  <a
+                    href="https://themeselection.com"
+                    target="_blank"
+                    className="footer-link"
+                  >
+                    ThemeSelection
+                  </a>
+                </div>
+                <div className="d-none d-lg-inline-block">
+                  <a
+                    href="https://themeselection.com/license/"
+                    className="footer-link me-4"
+                    target="_blank"
+                  >
+                    License
+                  </a>
+                  <a
+                    href="https://themeselection.com/"
+                    target="_blank"
+                    className="footer-link me-4"
+                  >
+                    More Themes
+                  </a>
+                  <a
+                    href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/"
+                    target="_blank"
+                    className="footer-link me-4"
+                  >
+                    Documentation
+                  </a>
+                  <a
+                    href="https://themeselection.com/support/"
+                    target="_blank"
+                    className="footer-link d-none d-sm-inline-block"
+                  >
+                    Support
+                  </a>
                 </div>
               </div>
-            </footer>
-            {/* / Footer */}
-            <div className="content-backdrop fade" />
-          </div>
-          {/* Content wrapper */}
+            </div>
+          </footer>
+          {/* / Footer */}
+          <div className="content-backdrop fade" />
         </div>
-
-
-
+        {/* Content wrapper */}
       </div>
+
+
     </div>
-  )
+
+
+
+
+  );
 }
 
-export default Producdetails
+export default EditProductVariant;

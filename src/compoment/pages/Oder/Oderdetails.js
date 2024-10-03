@@ -1,6 +1,141 @@
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 const Oderdetails = () => {
+
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { order } = location.state || {};
+    const [orderDetails, setOrderDetails] = useState(order);
+    const [isConfirmed, setIsConfirmed] = useState(false);
+
+    const [isDenied, setIsDenied] = useState(false);
+    const [confirmationTime, setConfirmationTime] = useState(null);
+    console.log('API 1', order)
+    // Hàm xử lý toggle cho từng menu
+    const fetchProductDetails = async (productId) => {
+        try {
+            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Product/${productId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching product with ID ${productId}:`, error);
+        }
+    };
+
+    const fetchColorDetails = async (colorId) => {
+        try {
+            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Color/${colorId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching color with ID ${colorId}:`, error);
+        }
+    };
+
+    const fetchSizeDetails = async (sizeId) => {
+        try {
+            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Size/${sizeId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching size with ID ${sizeId}:`, error);
+        }
+    };
+    useEffect(() => {
+        const fetchDetailsForOrderItems = async () => {
+            if (order && order.orderItems.length > 0) {
+                const updatedOrderItems = await Promise.all(order.orderItems.map(async (item) => {
+                    const productDetails = await fetchProductDetails(item.variant.productId);
+                    const colorDetails = await fetchColorDetails(item.variant.colorId);
+                    const sizeDetails = await fetchSizeDetails(item.variant.sizeId);
+
+                    return {
+                        ...item,
+                        variant: {
+                            ...item.variant,
+                            product: productDetails,
+                            color: colorDetails,
+                            size: sizeDetails,
+                        },
+                    };
+                }));
+
+                // Cập nhật state `orderDetails` với thông tin chi tiết mới
+                setOrderDetails({
+                    ...order,
+                    orderItems: updatedOrderItems,
+                });
+            }
+        };
+
+        fetchDetailsForOrderItems();
+    }, [order]);
+    const handleConfirmOrder = async () => {
+        try {
+            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/confirm/${order.orderId}`);
+
+            // Kiểm tra xem phản hồi có thành công hay không
+            if (response.status === 200 || response.status === 204) {
+                console.log('Order confirmed:', response.data);
+                alert('Order confirmed successfully!');
+                 setIsConfirmed(true); 
+                 setConfirmationTime(new Date().toLocaleString());
+               // Điều hướng đến trang OrderList sau khi xác nhận
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to confirm order.');
+            }
+        } catch (error) {
+            console.error('Error confirming order:', error.response?.data || error.message);
+            alert('Failed to confirm order.');
+        }
+
+
+    };
+
+
+    // Hàm từ chối đơn hàng
+    const handleDenyOrder = async () => {
+        try {
+            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/deny/${order.orderId}`);
+            console.log('Order denied:', response.data);
+
+            if (response.status === 200 || response.status === 204) {
+                console.log('Order deny:', response.data);
+                alert('Order deny successfully!');
+                setIsDenied(true);
+                navigate('/Oderlist'); // Điều hướng đến trang OrderList sau khi xác nhận
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to confirm order.');
+            }
+        } catch (error) {
+            console.error('Error denying order:', error);
+            alert('Failed to deny order.');
+        }
+    };
+
+
+
+
+
+
+
+
+    const handleMenuToggle = (menuName) => {
+        setMenuState((prevState) => {
+            const newState = {
+                ...prevState,
+                [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
+            };
+            // Lưu trạng thái menu mới vào localStorage
+            localStorage.setItem('menuState', JSON.stringify(newState));
+            return newState;
+        });
+    };
+
+
+
+
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState(() => {
         // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
@@ -14,19 +149,6 @@ const Oderdetails = () => {
             order: false
         };
     });
-
-    // Hàm xử lý toggle cho từng menu
-    const handleMenuToggle = (menuName) => {
-        setMenuState((prevState) => {
-            const newState = {
-                ...prevState,
-                [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
-            };
-            // Lưu trạng thái menu mới vào localStorage
-            localStorage.setItem('menuState', JSON.stringify(newState));
-            return newState;
-        });
-    };
 
     useEffect(() => {
         const menuInner = menuRef.current;
@@ -1323,367 +1445,265 @@ const Oderdetails = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <tr className="odd">
-                                                            <td
-                                                                className="  control"
-                                                                tabIndex={0}
-                                                                style={{ display: "none" }}
-                                                            />
-                                                            <td className="  dt-checkboxes-cell">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="dt-checkboxes form-check-input"
-                                                                />
-                                                            </td>
-                                                            <td className="sorting_1">
-                                                                <div className="d-flex justify-content-start align-items-center text-nowrap">
-                                                                    <div className="avatar-wrapper">
-                                                                        <div className="avatar avatar-sm me-3">
-                                                                            <img
-                                                                                src="../assets/img/woodenchair.png"
-                                                                                alt="product-Wooden Chair"
-                                                                                className="rounded-2"
-                                                                                _mstalt={396383}
-                                                                            />
+                                                        {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
+                                                            orderDetails.orderItems.map((item) => (
+                                                                <tr className="odd" key={item.orderItemId}>
+                                                                    <td className="control" tabIndex={0} style={{ display: "none" }} />
+                                                                    <td className="dt-checkboxes-cell">
+                                                                        <input type="checkbox" className="dt-checkboxes form-check-input" />
+                                                                    </td>
+                                                                    <td className="sorting_1">
+                                                                        <div className="d-flex justify-content-start align-items-center text-nowrap">
+                                                                            <div className="avatar-wrapper">
+                                                                                <div className="avatar avatar-sm me-3">
+
+
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="d-flex flex-column">
+                                                                                {/* Hiển thị tên sản phẩm */}
+                                                                                <h6 className="text-heading mb-0">
+                                                                                    {item.variant.product ? item.variant.product.name : 'Product Name'}
+                                                                                </h6>
+                                                                                <small>
+                                                                                    {item.variant && (
+                                                                                        <>
+                                                                                            {/* Hiển thị tên màu sắc */}
+                                                                                            <span>Color: {item.variant.color ? item.variant.color.colorName : 'Color Name'}</span>
+                                                                                            <span> & </span>
+                                                                                            <span>Size: {item.variant.size ? item.variant.size.sizeName : 'Size Name'}</span>
+                                                                                        </>
+                                                                                    )}
+                                                                                </small>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="text-heading mb-0">Wooden Chair</h6>
-                                                                        <small>Material: Wooden</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span>$841</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">2</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">1682</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr className="even">
-                                                            <td
-                                                                className="  control"
-                                                                tabIndex={0}
-                                                                style={{ display: "none" }}
-                                                            />
-                                                            <td className="  dt-checkboxes-cell">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="dt-checkboxes form-check-input"
-                                                                />
-                                                            </td>
-                                                            <td className="sorting_1">
-                                                                <div className="d-flex justify-content-start align-items-center text-nowrap">
-                                                                    <div className="avatar-wrapper">
-                                                                        <div className="avatar avatar-sm me-3">
-                                                                            <img
-                                                                                src="../assets/img/oneplus.png"
-                                                                                alt="product-Oneplus 10"
-                                                                                className="rounded-2"
-                                                                                _mstalt={311675}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="text-heading mb-0">Oneplus 10</h6>
-                                                                        <small>Storage:128gb</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span>$896</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">3</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">2688</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr className="odd">
-                                                            <td
-                                                                className="  control"
-                                                                tabIndex={0}
-                                                                style={{ display: "none" }}
-                                                            />
-                                                            <td className="  dt-checkboxes-cell">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="dt-checkboxes form-check-input"
-                                                                />
-                                                            </td>
-                                                            <td className="sorting_1">
-                                                                <div className="d-flex justify-content-start align-items-center text-nowrap">
-                                                                    <div className="avatar-wrapper">
-                                                                        <div className="avatar avatar-sm me-3">
-                                                                            <img
-                                                                                src="../assets/img/nikejordan.png"
-                                                                                alt="product-Nike Jordan"
-                                                                                className="rounded-2"
-                                                                                _mstalt={362518}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="text-heading mb-0">Nike Jordan</h6>
-                                                                        <small>Size:8UK</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span>$392</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">1</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">392</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr className="even">
-                                                            <td
-                                                                className="  control"
-                                                                tabIndex={0}
-                                                                style={{ display: "none" }}
-                                                            />
-                                                            <td className="  dt-checkboxes-cell">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="dt-checkboxes form-check-input"
-                                                                />
-                                                            </td>
-                                                            <td className="sorting_1">
-                                                                <div className="d-flex justify-content-start align-items-center text-nowrap">
-                                                                    <div className="avatar-wrapper">
-                                                                        <div className="avatar avatar-sm me-3">
-                                                                            <img
-                                                                                src="../assets/img/facecream.png"
-                                                                                alt="product-Face cream"
-                                                                                className="rounded-2"
-                                                                                _mstalt={329342}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="text-heading mb-0">Face cream</h6>
-                                                                        <small>Gender:Women</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span>$813</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">2</span>
-                                                            </td>
-                                                            <td>
-                                                                <span className="text-body">1626</span>
-                                                            </td>
-                                                        </tr>
+                                                                    </td>
+                                                                    {/* Hiển thị giá sản phẩm */}
+                                                                    <td>
+                                                                        <span>${item.price}</span>
+                                                                    </td>
+                                                                    {/* Hiển thị số lượng */}
+                                                                    <td>
+                                                                        <span>{item.quantity}</span>
+                                                                    </td>
+                                                                    {/* Hiển thị tổng giá tiền */}
+                                                                    <td>
+                                                                        <span className="text-body">${item.price * item.quantity}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan="6">No order items available.</td>
+                                                            </tr>
+                                                        )}
                                                     </tbody>
+
+
                                                 </table>
                                                 <div style={{ width: "1%" }} />
                                             </div>
                                             <div className="d-flex justify-content-end align-items-center m-6 mb-2">
-                                                <div className="order-calculations">
-                                                    <div className="d-flex justify-content-start mb-2">
-                                                        <span className="w-px-100 text-heading">Subtotal:</span>
-                                                        <h6 className="mb-0">$2093</h6>
-                                                    </div>
-                                                    <div className="d-flex justify-content-start mb-2">
-                                                        <span className="w-px-100 text-heading">Discount:</span>
-                                                        <h6 className="mb-0">$2</h6>
-                                                    </div>
-                                                    <div className="d-flex justify-content-start mb-2">
-                                                        <span className="w-px-100 text-heading">Tax:</span>
-                                                        <h6 className="mb-0">$28</h6>
-                                                    </div>
-                                                    <div className="d-flex justify-content-start">
-                                                        <h6 className="w-px-100 mb-0">Total:</h6>
-                                                        <h6 className="mb-0">$2113</h6>
-                                                    </div>
-                                                </div>
+                                                {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
+                                                    orderDetails.orderItems.map((item) => (
+                                                        <div className="order-calculations">
+                                                            <div className="d-flex justify-content-start">
+                                                                <h6 className="w-px-100 mb-0">Total:</h6>
+                                                                <h6 className="mb-0">${item.price * item.quantity}</h6>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p>No order details available.</p>
+                                                )}
+                                            </div>
+
+                                        </div>
+                                        <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
+                                            <button onClick={handleConfirmOrder} className="btn btn-success">
+                                                Confirm Order
+                                            </button>
+                                            <button onClick={handleDenyOrder} className="btn btn-danger">
+                                                Deny Order
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {isConfirmed && (
+                                        <div className="card mb-6">
+                                            <div className="card-header">
+                                                <h5 className="card-title m-0">Shipping activity</h5>
+                                            </div>
+                                            <div className="card-body pt-1">
+                                                <ul className="timeline pb-0 mb-0">
+                                                    <li className="timeline-item timeline-item-transparent border-primary">
+                                                        <span className="timeline-point timeline-point-primary" />
+                                                        <div className="timeline-event">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">
+                                                                    Order was placed (Order ID: #32543)
+                                                                </h6>
+                                                                <small className="text-muted">Confirmed at: {confirmationTime}</small>
+                                                            </div>
+                                                            <p className="mt-3">
+                                                                Your order has been placed successfully
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                    <li className="timeline-item timeline-item-transparent border-primary">
+                                                        <span className="timeline-point timeline-point-primary" />
+                                                        <div className="timeline-event">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">Pick-up</h6>
+                                                                <small className="text-muted">Wednesday 11:29 AM</small>
+                                                            </div>
+                                                            <p className="mt-3 mb-3">Pick-up scheduled with courier</p>
+                                                        </div>
+                                                    </li>
+                                                    <li className="timeline-item timeline-item-transparent border-primary">
+                                                        <span className="timeline-point timeline-point-primary" />
+                                                        <div className="timeline-event">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">Dispatched</h6>
+                                                                <small className="text-muted">Thursday 11:29 AM</small>
+                                                            </div>
+                                                            <p className="mt-3 mb-3">
+                                                                Item has been picked up by courier
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                    <li className="timeline-item timeline-item-transparent border-primary">
+                                                        <span className="timeline-point timeline-point-primary" />
+                                                        <div className="timeline-event">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">Package arrived</h6>
+                                                                <small className="text-muted">Saturday 15:20 AM</small>
+                                                            </div>
+                                                            <p className="mt-3 mb-3">
+                                                                Package arrived at an Amazon facility, NY
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                    <li className="timeline-item timeline-item-transparent border-left-dashed">
+                                                        <span className="timeline-point timeline-point-primary" />
+                                                        <div className="timeline-event">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">Dispatched for delivery</h6>
+                                                                <small className="text-muted">Today 14:12 PM</small>
+                                                            </div>
+                                                            <p className="mt-3 mb-3">
+                                                                Package has left an Amazon facility, NY
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                    <li className="timeline-item timeline-item-transparent border-transparent pb-0">
+                                                        <span className="timeline-point timeline-point-secondary" />
+                                                        <div className="timeline-event pb-0">
+                                                            <div className="timeline-header">
+                                                                <h6 className="mb-0">Delivery</h6>
+                                                            </div>
+                                                            <p className="mt-1 mb-0">
+                                                                Package will be delivered by tomorrow
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                </ul>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="card mb-6">
-                                        <div className="card-header">
-                                            <h5 className="card-title m-0">Shipping activity</h5>
-                                        </div>
-                                        <div className="card-body pt-1">
-                                            <ul className="timeline pb-0 mb-0">
-                                                <li className="timeline-item timeline-item-transparent border-primary">
-                                                    <span className="timeline-point timeline-point-primary" />
-                                                    <div className="timeline-event">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">
-                                                                Order was placed (Order ID: #32543)
-                                                            </h6>
-                                                            <small className="text-muted">Tuesday 11:29 AM</small>
-                                                        </div>
-                                                        <p className="mt-3">
-                                                            Your order has been placed successfully
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                                <li className="timeline-item timeline-item-transparent border-primary">
-                                                    <span className="timeline-point timeline-point-primary" />
-                                                    <div className="timeline-event">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">Pick-up</h6>
-                                                            <small className="text-muted">Wednesday 11:29 AM</small>
-                                                        </div>
-                                                        <p className="mt-3 mb-3">Pick-up scheduled with courier</p>
-                                                    </div>
-                                                </li>
-                                                <li className="timeline-item timeline-item-transparent border-primary">
-                                                    <span className="timeline-point timeline-point-primary" />
-                                                    <div className="timeline-event">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">Dispatched</h6>
-                                                            <small className="text-muted">Thursday 11:29 AM</small>
-                                                        </div>
-                                                        <p className="mt-3 mb-3">
-                                                            Item has been picked up by courier
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                                <li className="timeline-item timeline-item-transparent border-primary">
-                                                    <span className="timeline-point timeline-point-primary" />
-                                                    <div className="timeline-event">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">Package arrived</h6>
-                                                            <small className="text-muted">Saturday 15:20 AM</small>
-                                                        </div>
-                                                        <p className="mt-3 mb-3">
-                                                            Package arrived at an Amazon facility, NY
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                                <li className="timeline-item timeline-item-transparent border-left-dashed">
-                                                    <span className="timeline-point timeline-point-primary" />
-                                                    <div className="timeline-event">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">Dispatched for delivery</h6>
-                                                            <small className="text-muted">Today 14:12 PM</small>
-                                                        </div>
-                                                        <p className="mt-3 mb-3">
-                                                            Package has left an Amazon facility, NY
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                                <li className="timeline-item timeline-item-transparent border-transparent pb-0">
-                                                    <span className="timeline-point timeline-point-secondary" />
-                                                    <div className="timeline-event pb-0">
-                                                        <div className="timeline-header">
-                                                            <h6 className="mb-0">Delivery</h6>
-                                                        </div>
-                                                        <p className="mt-1 mb-0">
-                                                            Package will be delivered by tomorrow
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                                <div className="col-12 col-lg-4">
-                                    <div className="card mb-6">
-                                        <div className="card-header">
-                                            <h5 className="card-title m-0">Customer details</h5>
+
+                                {order ? (
+                                    <div className="col-12 col-lg-4">
+                                        <div className="card mb-6">
+                                            <div className="card-header">
+                                                <h5 className="card-title m-0">Customer details</h5>
+                                            </div>
+                                            <div className="card-body">
+                                                <div className="d-flex justify-content-start align-items-center mb-6">
+                                                    <div className="avatar me-3">
+                                                    </div>
+                                                    <div className="d-flex flex-column">
+                                                        <a
+                                                            href="app-user-view-account.html"
+                                                            className="text-body text-nowrap"
+                                                        >
+                                                            <h6 className="mb-0">{order.name}</h6>
+                                                        </a>
+                                                        <span>{order.orderId}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="d-flex justify-content-start align-items-center mb-6">
+                                                    <span className="avatar rounded-circle bg-label-success me-3 d-flex align-items-center justify-content-center">
+                                                        <i className="bx bx-cart bx-lg" />
+                                                    </span>
+                                                    <h6 className="text-nowrap mb-0"></h6>
+                                                </div>
+                                                <div className="d-flex justify-content-between">
+                                                    <h6 className="mb-1">Contact info</h6>
+                                                    <h6 className="mb-1">
+                                                        <a
+                                                            href=" javascript:void(0)"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#editUser"
+                                                        >
+                                                            Edit
+                                                        </a>
+                                                    </h6>
+                                                </div>
+                                                <p className=" mb-1">Email:{order.email}</p>
+                                                <p className=" mb-0">Mobile: +1 (609) {order.telephone}</p>
+                                            </div>
                                         </div>
-                                        <div className="card-body">
-                                            <div className="d-flex justify-content-start align-items-center mb-6">
-                                                <div className="avatar me-3">
-                                                    <img
-                                                        src="../../assets/img/avatars/1.png"
-                                                        alt="Avatar"
-                                                        className="rounded-circle"
-                                                        _mstalt={76271}
-                                                    />
-                                                </div>
-                                                <div className="d-flex flex-column">
-                                                    <a
-                                                        href="app-user-view-account.html"
-                                                        className="text-body text-nowrap"
-                                                    >
-                                                        <h6 className="mb-0">Shamus Tuttle</h6>
-                                                    </a>
-                                                    <span>Customer ID: #58909</span>
-                                                </div>
-                                            </div>
-                                            <div className="d-flex justify-content-start align-items-center mb-6">
-                                                <span className="avatar rounded-circle bg-label-success me-3 d-flex align-items-center justify-content-center">
-                                                    <i className="bx bx-cart bx-lg" />
-                                                </span>
-                                                <h6 className="text-nowrap mb-0">12 Orders</h6>
-                                            </div>
-                                            <div className="d-flex justify-content-between">
-                                                <h6 className="mb-1">Contact info</h6>
-                                                <h6 className="mb-1">
+                                        <div className="card mb-6">
+                                            <div className="card-header d-flex justify-content-between">
+                                                <h5 className="card-title m-0">Shipping address</h5>
+                                                <h6 className="m-0">
                                                     <a
                                                         href=" javascript:void(0)"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#editUser"
+                                                        data-bs-target="#addNewAddress"
                                                     >
                                                         Edit
                                                     </a>
                                                 </h6>
                                             </div>
-                                            <p className=" mb-1">Email: Shamus889@yahoo.com</p>
-                                            <p className=" mb-0">Mobile: +1 (609) 972-22-22</p>
+                                            <div className="card-body">
+                                                <p className="mb-0">
+                                                    {order.shippingAddress}<br />
+                                                    Latheronwheel <br />
+                                                    KW5 8NW,London <br />
+                                                    UK
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="card mb-6">
+                                            <div className="card-header d-flex justify-content-between pb-2">
+                                                <h5 className="card-title m-0">Billing address</h5>
+                                                <h6 className="m-0">
+                                                    <a
+                                                        href=" javascript:void(0)"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#addNewAddress"
+                                                    >
+                                                        Edit
+                                                    </a>
+                                                </h6>
+                                            </div>
+                                            <div className="card-body">
+                                                <p className="mb-6">
+                                                    {order.shippingAddress} <br />
+                                                    Latheronwheel <br />
+                                                    KW5 8NW,London <br />
+                                                    UK
+                                                </p>
+                                                {/* <h5 className="mb-1">Mastercard</h5>
+                                                <p className="mb-0">Card Number: ******4291</p> */}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="card mb-6">
-                                        <div className="card-header d-flex justify-content-between">
-                                            <h5 className="card-title m-0">Shipping address</h5>
-                                            <h6 className="m-0">
-                                                <a
-                                                    href=" javascript:void(0)"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#addNewAddress"
-                                                >
-                                                    Edit
-                                                </a>
-                                            </h6>
-                                        </div>
-                                        <div className="card-body">
-                                            <p className="mb-0">
-                                                45 Roker Terrace <br />
-                                                Latheronwheel <br />
-                                                KW5 8NW,London <br />
-                                                UK
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="card mb-6">
-                                        <div className="card-header d-flex justify-content-between pb-2">
-                                            <h5 className="card-title m-0">Billing address</h5>
-                                            <h6 className="m-0">
-                                                <a
-                                                    href=" javascript:void(0)"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#addNewAddress"
-                                                >
-                                                    Edit
-                                                </a>
-                                            </h6>
-                                        </div>
-                                        <div className="card-body">
-                                            <p className="mb-6">
-                                                45 Roker Terrace <br />
-                                                Latheronwheel <br />
-                                                KW5 8NW,London <br />
-                                                UK
-                                            </p>
-                                            <h5 className="mb-1">Mastercard</h5>
-                                            <p className="mb-0">Card Number: ******4291</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                ) : (
+                                    <p>No order details available.</p>
+                                )}
                             </div>
                             {/* Edit User Modal */}
                             <div

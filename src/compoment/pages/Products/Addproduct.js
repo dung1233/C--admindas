@@ -431,7 +431,7 @@ const Addproduct = () => {
                       </li>
                     </ul>
                   </li>
-                  <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                  {/* <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
                     <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
                       <div className="text-truncate" data-i18n="Customer">
                         Customer
@@ -511,7 +511,7 @@ const Addproduct = () => {
                       </div>
                     </a>
 
-                  </li>
+                  </li> */}
                 </ul>
               </li>
 

@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 const Product = () => {
-
   const menuRef = useRef(null);
   const [menuState, setMenuState] = useState(() => {
     // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
@@ -18,25 +17,19 @@ const Product = () => {
       Settings: false
     };
   });
-
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-
   const fetchProducts = async () => {
     try {
       const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Product');
-
       if (response.status === 200) {
-     
-
         // Kiểm tra xem `response.data` có phải là mảng không, nếu không thì kiểm tra các trường khác
         const productData = Array.isArray(response.data) ? response.data : response.data.products;
-
         // Đảm bảo `productData` là một mảng trước khi lưu vào state
         if (Array.isArray(productData)) {
           setProducts(productData);
+          console.log("API " , response.productData)
         } else {
           console.error('Dữ liệu sản phẩm không phải mảng:', productData);
           setError('Dữ liệu sản phẩm không hợp lệ');
@@ -54,7 +47,6 @@ const Product = () => {
     try {
       const response = await axios.delete(`https://projectky320240926105522.azurewebsites.net/api/Product/${id}`);
       console.log('Phản hồi từ API xóa:', response);
-  
       if (response.status === 200 || response.status === 204) { // Kiểm tra cả mã 204 (No Content)
         console.log('Xóa sản phẩm thành công!');
         // Cập nhật lại danh sách sản phẩm sau khi xóa thành công
@@ -66,14 +58,11 @@ const Product = () => {
       console.error('Lỗi khi xóa sản phẩm:', error);
     }
   };
-  
-
   useEffect(() => {
     // Gọi API khi component được render
     fetchProducts();
   }, []);
-
-
+  
   // Hàm xử lý toggle cho từng menu
   const handleMenuToggle = (menuName) => {
     setMenuState((prevState) => {
@@ -328,7 +317,7 @@ const Product = () => {
                       </li>
                     </ul>
                   </li>
-                  <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                  {/* <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
                     <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
                       <div className="text-truncate" data-i18n="Customer">
                         Customer
@@ -447,7 +436,7 @@ const Product = () => {
                         </a>
                       </li>
                     </ul>
-                  </li>
+                  </li> */}
                 </ul>
               </li>
 
@@ -1347,43 +1336,7 @@ const Product = () => {
                 </div>
                 {/* Product List Table */}
                 <div className="card">
-                  <div className="card-header">
-                    <h5 className="card-title">Filter</h5>
-                    <div className="d-flex justify-content-between align-items-center row pt-4 gap-6 gap-md-0 g-md-6">
-                      <div className="col-md-4 product_status">
-                        <select
-                          id="ProductStatus"
-                          className="form-select text-capitalize"
-                        >
-                          <option value="">Status</option>
-                          <option value="Scheduled">Scheduled</option>
-                          <option value="Publish">Publish</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
-                      </div>
-                      <div className="col-md-4 product_category">
-                        <select
-                          id="ProductCategory"
-                          className="form-select text-capitalize"
-                        >
-                          <option value="">Category</option>
-                          <option value="Household">Household</option>
-                          <option value="Office">Office</option>
-                          <option value="Electronics">Electronics</option>
-                          <option value="Shoes">Shoes</option>
-                          <option value="Accessories">Accessories</option>
-                          <option value="Game">Game</option>
-                        </select>
-                      </div>
-                      {/* <div className="col-md-4 product_stock">
-                        <select id="ProductStock" className="form-select text-capitalize">
-                          <option value=""> Stock </option>
-                          <option value="Out_of_Stock">Out of Stock</option>
-                          <option value="In_Stock">In Stock</option>
-                        </select>
-                      </div> */}
-                    </div>
-                  </div>
+
                   <div className="card-datatable table-responsive">
                     <div
                       id="DataTables_Table_0_wrapper"
@@ -1391,78 +1344,21 @@ const Product = () => {
                     >
                       <div className="card-header d-flex border-top rounded-0 flex-wrap py-0 flex-column flex-md-row align-items-start">
                         <div className="me-5 ms-n4 pe-5 mb-n6 mb-md-0">
-                          <div
-                            id="DataTables_Table_0_filter"
-                            className="dataTables_filter"
-                          >
+                          <div id="DataTables_Table_0_filter" className="dataTables_filter">
                             <label>
                               <input
                                 type="search"
                                 className="form-control"
                                 placeholder="Search Product"
                                 aria-controls="DataTables_Table_0"
+                               
                               />
                             </label>
                           </div>
+      
                         </div>
-                        <div className="d-flex justify-content-start justify-content-md-end align-items-baseline">
-                          <div className="dt-action-buttons d-flex flex-column align-items-start align-items-sm-center justify-content-sm-center pt-0 gap-sm-4 gap-sm-0 flex-sm-row">
-                            <div
-                              className="dataTables_length mx-n2"
-                              id="DataTables_Table_0_length"
-                            >
-                              <label>
-                                <select
-                                  name="DataTables_Table_0_length"
-                                  aria-controls="DataTables_Table_0"
-                                  className="form-select"
-                                >
-                                  <option value={7}>7</option>
-                                  <option value={10}>10</option>
-                                  <option value={20}>20</option>
-                                  <option value={50}>50</option>
-                                  <option value={70}>70</option>
-                                  <option value={100}>100</option>
-                                </select>
-                              </label>
-                            </div>
-                            <div className="dt-buttons btn-group flex-wrap d-flex mb-6 mb-sm-0">
-                              {" "}
-                              <div className="btn-group">
-                                <button
-                                  className="btn btn-secondary buttons-collection dropdown-toggle btn-label-secondary me-4"
-                                  tabIndex={0}
-                                  aria-controls="DataTables_Table_0"
-                                  type="button"
-                                  aria-haspopup="dialog"
-                                  aria-expanded="false"
-                                >
-                                  <span>
-                                    <i className="bx bx-export me-2 bx-xs" />
-                                    Export
-                                  </span>
-                                </button>
-                              </div>{" "}
-                              <button
-                                className="btn btn-secondary add-new btn-primary"
-                                tabIndex={0}
-                                aria-controls="DataTables_Table_0"
-                                type="button"
-                              >
-                                <span>
-                                  <i className="bx bx-plus me-0 me-sm-1 bx-xs" />
-                                  <span className="d-none d-sm-inline-block">
-                                    <Link to="/Addproduct" >
-                                      <div className="text-truncate" data-i18n="Add Product">
-                                        Add Product
-                                      </div>
-                                    </Link>
-                                  </span>
-                                </span>
-                              </button>{" "}
-                            </div>
-                          </div>
-                        </div>
+                        
+
                       </div>
                       <table
                         className="datatables-products table dataTable no-footer dtr-column"
@@ -1638,8 +1534,8 @@ const Product = () => {
                                   <div className="dropdown-menu dropdown-menu-end m-0">
                                     <Link to={{ pathname: "/Productdetails" }} state={{ request: product }} className="dropdown-item">View</Link>
                                     <a className="dropdown-item" onClick={() => deleteProduct(product.productId)} style={{ cursor: 'pointer' }}>
-  Xóa
-</a>
+                                      Xóa
+                                    </a>
                                   </div>
                                 </div>
                               </td>

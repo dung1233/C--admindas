@@ -1,6 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 const Commerce = () => {
+    // nút log out 
+    const navigate = useNavigate(); // Sử dụng hook để điều hướng
+    const token = localStorage.getItem('jwtToken'); 
+    console.log("Co token hay k:" ,token)
+  
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('jwtToken'); // Lấy token từ localStorage
+      console.log(token)
+
+      // Xóa token và userName khỏi localStorage
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('userName');
+      
+      // Điều hướng về trang đăng nhập
+      navigate('/login');
+    } catch (error) {
+      console.error('Lỗi khi đăng xuất:', error);
+    }
+  };
+
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState({
         dashboard: false,
@@ -221,6 +243,13 @@ const Commerce = () => {
                                                 </a>
                                             </li>
                                             <li className="menu-item">
+                                                <a href="/Editproduct" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Add Product">
+                                                        Edit Product
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
                                                 <a href="/Catenorylist" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Category List">
                                                         Category List
@@ -252,7 +281,7 @@ const Commerce = () => {
                                             </li>
                                         </ul>
                                     </li>
-                                    <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                                    {/* <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
                                     <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
                                             <div className="text-truncate" data-i18n="Customer">
                                                 Customer
@@ -316,16 +345,16 @@ const Commerce = () => {
                                                 </ul>
                                             </li>
                                         </ul>
-                                    </li>
-                                    <li className="menu-item">
+                                    </li> */}
+                                    {/* <li className="menu-item">
                                         <a href="app-ecommerce-manage-reviews.html" className="menu-link">
                                             <div className="text-truncate" data-i18n="Manage Reviews">
                                                 Manage Reviews
                                             </div>
                                         </a>
-                                    </li>
+                                    </li> */}
                                   
-                                    <li className={`menu-item ${menuState.Settings? 'open' : ''}`}>
+                                    {/* <li className={`menu-item ${menuState.Settings? 'open' : ''}`}>
                                     <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Settings'); }}>
                                             <div className="text-truncate" data-i18n="Settings">
                                                 Settings
@@ -378,7 +407,7 @@ const Commerce = () => {
                                                 </a>
                                             </li>
                                         </ul>
-                                    </li>
+                                    </li> */}
                                 </ul>
                                 <li className={`menu-item ${menuState.Users? 'open' : ''}`}>
                                 <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Users'); }}>
@@ -1162,8 +1191,9 @@ const Commerce = () => {
                                             <li>
                                                 <a
                                                     className="dropdown-item"
-                                                    href="auth-login-cover.html"
+                                                   
                                                     target="_blank"
+                                                    onClick={handleLogout}
                                                 >
                                                     <i className="bx bx-power-off bx-md me-3" />
                                                     <span>Log Out</span>

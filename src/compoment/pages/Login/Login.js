@@ -9,8 +9,10 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const token = localStorage.getItem('jwtToken'); 
+  console.log("Co token hay k:" ,token)
 
-  // Hàm kiểm tra định dạng email
+  // Hàm kiểm tra định dạng email 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -44,7 +46,7 @@ const Login = () => {
       setIsLoading(true);
       try {
         const response = await axios.post(
-          'https://projectky320240926105522.azurewebsites.net/api/Admin/login', // Thay bằng URL API của bạn
+          'https://projectky320240926105522.azurewebsites.net/api/Auth/login', // Thay bằng URL API của bạn
           loginData, // Dữ liệu đăng nhập
           {
             headers: {
@@ -57,7 +59,7 @@ const Login = () => {
         console.log("Dữ liệu đăng nhập thành công:", data);
 
         // Lưu JWT và tên người dùng vào localStorage
-        localStorage.setItem('jwtToken', data.jwt);
+        localStorage.setItem('jwtToken', data.token);
         localStorage.setItem('userName', data.userName);
 
         setSuccessMessage("Đăng nhập thành công!");
@@ -78,8 +80,7 @@ const Login = () => {
 
   return (
     <div>
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-      {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+      
       <div className="authentication-wrapper authentication-cover">
         <div className="authentication-inner row m-0">
           <div className="d-none d-lg-flex col-lg-7 col-xl-8 align-items-center p-5">
@@ -127,6 +128,8 @@ const Login = () => {
                 <button className="btn btn-primary d-grid w-100" disabled={isLoading}>
                   {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </button>
+                {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+                {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
               </form>
             </div>
           </div>

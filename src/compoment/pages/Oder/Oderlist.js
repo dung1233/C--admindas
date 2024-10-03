@@ -1,6 +1,45 @@
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 const Oderlist = () => {
+
+    const [orders, setOrders] = useState([]);
+    const [users, setUsers] = useState([]);
+    const navigate = useNavigate();
+    // Gọi API lấy dữ liệu đơn hàng
+    const fetchOrders = async () => {
+        try {
+            const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Order');
+            setOrders(response.data);
+            console.log('Orders fetched successfully:', response.data);
+        } catch (error) {
+            console.error('Error fetching orders:', error.response?.data || error.message);
+        }
+    };
+
+    // Gọi API lấy dữ liệu người dùng
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/User');
+            setUsers(response.data);
+            console.log('Users fetched successfully:', response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error.response?.data || error.message);
+        }
+    };
+
+    useEffect(() => {
+        // Gọi cả hai API khi component được mount
+        fetchOrders();
+        fetchUsers();
+    }, []);
+    const handleViewClick = (order) => {
+        // Điều hướng tới trang chi tiết với state truyền đi
+        navigate(`/OrderDetails/${order.orderId}`, { state: { order } });
+    };
+
+
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState(() => {
         // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
@@ -15,7 +54,6 @@ const Oderlist = () => {
             Customer: false
         };
     });
-
     // Hàm xử lý toggle cho từng menu
     const handleMenuToggle = (menuName) => {
         setMenuState((prevState) => {
@@ -259,7 +297,7 @@ const Oderlist = () => {
                                             </a>
                                         </li>
 
-                                        <li className="menu-item active">
+                                        <li className="menu-item ">
                                             <a href="/Oderdetails" className="menu-link">
                                                 <div className="text-truncate" data-i18n="Order Details">
                                                     Order Details
@@ -654,7 +692,7 @@ const Oderlist = () => {
                                                         style={{ width: 49 }}
                                                         aria-label="order: activate to sort column ascending"
                                                     >
-                                                        order
+                                                        Order ID
                                                     </th>
                                                     <th
                                                         className="sorting sorting_asc"
@@ -666,7 +704,7 @@ const Oderlist = () => {
                                                         aria-label="date: activate to sort column descending"
                                                         aria-sort="ascending"
                                                     >
-                                                        date
+                                                        User Name
                                                     </th>
                                                     <th
                                                         className="sorting"
@@ -677,7 +715,7 @@ const Oderlist = () => {
                                                         style={{ width: 253 }}
                                                         aria-label="customers: activate to sort column ascending"
                                                     >
-                                                        customers
+                                                        Email
                                                     </th>
                                                     <th
                                                         className="sorting"
@@ -688,7 +726,7 @@ const Oderlist = () => {
                                                         style={{ width: 99 }}
                                                         aria-label="payment: activate to sort column ascending"
                                                     >
-                                                        payment
+                                                        Price
                                                     </th>
                                                     <th
                                                         className="sorting"
@@ -699,7 +737,7 @@ const Oderlist = () => {
                                                         style={{ width: 111 }}
                                                         aria-label="status: activate to sort column ascending"
                                                     >
-                                                        status
+                                                        Status
                                                     </th>
                                                     <th
                                                         className="sorting"
@@ -710,13 +748,24 @@ const Oderlist = () => {
                                                         style={{ width: 133 }}
                                                         aria-label="method: activate to sort column ascending"
                                                     >
-                                                        method
+                                                        Order Date
+                                                    </th>
+                                                    <th
+                                                        className="sorting"
+                                                        tabIndex={0}
+                                                        aria-controls="DataTables_Table_0"
+                                                        rowSpan={1}
+                                                        colSpan={1}
+                                                        style={{ width: 123 }}
+                                                        aria-label="method: activate to sort column ascending"
+                                                    >
+                                                        Shipping Method
                                                     </th>
                                                     <th
                                                         className="sorting_disabled dtr-hidden"
                                                         rowSpan={1}
                                                         colSpan={1}
-                                                        style={{ width: 0, display: "none" }}
+                                                        style={{ width: 0 }}
                                                         aria-label="Actions"
                                                     >
                                                         Actions
@@ -724,918 +773,54 @@ const Oderlist = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr className="odd">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#6979</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 15, 2023, 10:21</span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/3.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Cristine Easom
-                                                                    </a>
-                                                                </h6>
-                                                                <small>ceasomw@theguardian.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-warning">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Pending
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-success"
-                                                            text-capitalized=""
-                                                        >
-                                                            Delivered
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                2356
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
+                                                {orders.map((order) => {
+                                                    // Tìm user tương ứng với userId từ đơn hàng
+                                                    const user = users.find((u) => u.userId === order.userId);
+                                                    return (
+                                                        <tr key={order.orderId}>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td>{order.orderId}</td>
+                                                            <td>{user ? user.name : 'Unknown'}</td>
+                                                            <td>{user ? user.email : 'N/A'}</td>
+                                                            <td>{order.totalAmount}</td>
+                                                            <td><span
+                                                                className={`badge px-2 ${order.status === 'pending' ? 'badge bg-label-warning' :
+                                                                        order.status === 'Cancelled' ? 'badge bg-label-danger' :
+                                                                        order.status === 'Denied' ? 'badge bg-label-danger' :
+                                                                        order.status === 'Return' ? 'badge bg-label-danger' :
+                                                                                           'badge bg-label-success'
+                                                                    }`}
                                                             >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="even">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#6624</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 17, 2023, 6:43 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <span className="avatar-initial rounded-circle bg-label-warning">
-                                                                        FS
-                                                                    </span>
+                                                                {order.status}
+                                                            </span></td>
+                                                            <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                                                            <td>{order.shippingMethod}</td>
+                                                            <td className="dtr-hidden" >
+                                                                <div className="d-flex justify-content-sm-start align-items-sm-center">
+                                                                    <button className="btn btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                                        <i className="bx bx-dots-vertical-rounded bx-md" />
+                                                                    </button>
+                                                                    <div className="dropdown-menu dropdown-menu-end m-0">
+                                                                        <a>
+                                                                            <Link
+                                                                                to={`/OrderDetails/${order.orderId}`}
+                                                                                state={{ order }} // Truyền order qua state
+                                                                                className="dropdown-item"
+                                                                            >
+                                                                                View
+                                                                            </Link>
+                                                                        </a>
+                                                                        <a href="javascript:void(0);" className="dropdown-item delete-record"
+                                                                        >
+                                                                            Delete
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Fayre Screech
-                                                                    </a>
-                                                                </h6>
-                                                                <small>fscreechs@army.mil</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-danger">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Failed
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-success"
-                                                            text-capitalized=""
-                                                        >
-                                                            Delivered
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                2077
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="odd">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#9305</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 17, 2023, 8:05 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <span className="avatar-initial rounded-circle bg-label-danger">
-                                                                        PP
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Pauline Pfaffe
-                                                                    </a>
-                                                                </h6>
-                                                                <small>ppfaffe1i@wikia.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-secondary">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Cancelled
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-primary"
-                                                            text-capitalized=""
-                                                        >
-                                                            Out for Delivery
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/paypal.png"
-                                                                alt="paypal"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                @gmail.com
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="even">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#8005</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 22, 2023, 3:01 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/1.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Maurits Nealey
-                                                                    </a>
-                                                                </h6>
-                                                                <small>mnealeyf@japanpost.jp</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-success">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Paid
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-warning"
-                                                            text-capitalized=""
-                                                        >
-                                                            Dispatched
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                1555
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="odd">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#5859</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 29, 2023, 9:52 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <span className="avatar-initial rounded-circle bg-label-danger">
-                                                                        EV
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Eydie Vogelein
-                                                                    </a>
-                                                                </h6>
-                                                                <small>evogelein2g@forbes.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-secondary">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Cancelled
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-primary"
-                                                            text-capitalized=""
-                                                        >
-                                                            Out for Delivery
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/paypal.png"
-                                                                alt="paypal"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                @gmail.com
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="even">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#8114</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Apr 8, 2023, 3:39 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/4.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Ulysses Goodlife
-                                                                    </a>
-                                                                </h6>
-                                                                <small>ugoodlife2p@blogger.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-danger">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Failed
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-primary"
-                                                            text-capitalized=""
-                                                        >
-                                                            Out for Delivery
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                4509
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="odd">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#6890</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Aug 1, 2022, 7:24 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/9.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Etienne Duke
-                                                                    </a>
-                                                                </h6>
-                                                                <small>eduke1z@dell.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-secondary">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Cancelled
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-info"
-                                                            text-capitalized=""
-                                                        >
-                                                            Ready to Pickup
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                3507
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="even">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#5911</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Aug 14, 2022, 3:26 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <span className="avatar-initial rounded-circle bg-label-warning">
-                                                                        HM
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Hilliard Merck
-                                                                    </a>
-                                                                </h6>
-                                                                <small>hmerck2n@printfriendly.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-secondary">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Cancelled
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-success"
-                                                            text-capitalized=""
-                                                        >
-                                                            Delivered
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/paypal.png"
-                                                                alt="paypal"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                @gmail.com
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="odd">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#5531</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Aug 20, 2022, 3:21 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/3.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Cletus Arias
-                                                                    </a>
-                                                                </h6>
-                                                                <small>carias21@rambler.ru</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-danger">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Failed
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-warning"
-                                                            text-capitalized=""
-                                                        >
-                                                            Dispatched
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/mastercard-cc.png"
-                                                                alt="mastercard-cc"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                5851
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <tr className="even">
-                                                    <td className="control" tabIndex={0} style={{}} />
-                                                    <td className="  dt-checkboxes-cell">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="dt-checkboxes form-check-input"
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <a href="app-ecommerce-order-details.html">
-                                                            <span>#8044</span>
-                                                        </a>
-                                                    </td>
-                                                    <td className="sorting_1">
-                                                        <span className="text-nowrap">Aug 22, 2022, 6:36 </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex justify-content-start align-items-center order-name text-nowrap">
-                                                            <div className="avatar-wrapper">
-                                                                <div className="avatar avatar-sm me-3">
-                                                                    <img
-                                                                        src="../../assets/img/avatars/5.png"
-                                                                        alt="Avatar"
-                                                                        className="rounded-circle"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="d-flex flex-column">
-                                                                <h6 className="m-0">
-                                                                    <a
-                                                                        href="pages-profile-user.html"
-                                                                        className="text-heading"
-                                                                    >
-                                                                        Nowell Cornford
-                                                                    </a>
-                                                                </h6>
-                                                                <small>ncornfordn@sogou.com</small>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <h6 className="mb-0 align-items-center d-flex w-px-100 text-secondary">
-                                                            <i className="bx bxs-circle bx-8px me-1" />
-                                                            Cancelled
-                                                        </h6>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className="badge px-2 bg-label-primary"
-                                                            text-capitalized=""
-                                                        >
-                                                            Out for Delivery
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center text-nowrap">
-                                                            <img
-                                                                src="../../assets/img/icons/payments/paypal.png"
-                                                                alt="paypal"
-                                                                width={29}
-                                                            />
-                                                            <span>
-                                                                <i className="bx bx-dots-horizontal-rounded mt-1" />
-                                                                @gmail.com
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="dtr-hidden" style={{ display: "none" }}>
-                                                        <div className="d-flex justify-content-sm-start align-items-sm-center">
-                                                            <button
-                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                            </button>
-                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                <a
-                                                                    href="app-ecommerce-order-details.html"
-                                                                    className="dropdown-item"
-                                                                >
-                                                                    View
-                                                                </a>
-                                                                <a
-                                                                    href="javascript:0;"
-                                                                    className="dropdown-item delete-record"
-                                                                >
-                                                                    Delete
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                         <div className="row">

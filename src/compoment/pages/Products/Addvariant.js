@@ -383,7 +383,7 @@ const Addproduct = () => {
                                             </li>
                                         </ul>
                                     </li>
-                                    <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                                    {/* <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
                                         <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
                                             <div className="text-truncate" data-i18n="Customer">
                                                 Customer
@@ -463,7 +463,7 @@ const Addproduct = () => {
                                             </div>
                                         </a>
 
-                                    </li>
+                                    </li> */}
                                 </ul>
                             </li>
 
@@ -1285,109 +1285,119 @@ const Addproduct = () => {
                         <div className="content-wrapper">
                             {/* Content */}
                             <div className="container-xxl flex-grow-1 container-p-y">
-                                <div className="app-ecommerce">
-                                    {/* Add Product */}
-                                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-6 row-gap-4">
-                                        <div className="d-flex flex-column justify-content-center">
-                                            <h4 className="mb-1">Add a new Product</h4>
-                                            <p className="mb-0">Orders placed across your store</p>
-                                        </div>
-                                        <div className="d-flex align-content-center flex-wrap gap-4">
-
-                                            <button type="submit" className="btn btn-primary">
-                                                Publish product
-                                            </button>
+                            <div className='container'>
+                                    {/* Brand Modal */}
+                                    <div className="modal fade" id="addBrandModal" tabIndex="-1" aria-labelledby="addBrandModalLabel" aria-hidden="true">
+                                        <div className="modal-dialog">
+                                            <div className="modal-content">
+                                                <div className="modal-header">
+                                                    <h5 className="modal-title" id="addBrandModalLabel">Thêm Brand</h5>
+                                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div className="modal-body">
+                                                    <form onSubmit={handleAddBrand}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="brandName" className="form-label">Tên Brand</label>
+                                                            <input type="text" className="form-control" id="brandName" value={brandName} onChange={(e) => setBrandName(e.target.value)} required />
+                                                        </div>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="brandSlug" className="form-label">Slug Brand</label>
+                                                            <input type="text" className="form-control" id="brandSlug" value={brandSlug} onChange={(e) => setBrandSlug(e.target.value)} required />
+                                                        </div>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="brandImage" className="form-label">URL Hình ảnh Brand</label>
+                                                            <input type="text" className="form-control" id="brandImage" value={brandImage} onChange={(e) => setBrandImage(e.target.value)} required />
+                                                        </div>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="brandDescription" className="form-label">Mô tả Brand</label>
+                                                            <input type="text" className="form-control" id="brandDescription" value={brandDescription} onChange={(e) => setBrandDescription(e.target.value)} required />
+                                                        </div>
+                                                        <button type="submit" className="btn btn-primary">Thêm Brand</button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className='row'>
-                                        {/* Form thêm Brand */}
-                                        <form onSubmit={handleAddBrand}>
-                                      
-                                            <input
-                                                type="text"
-                                                placeholder="Tên Brand"
-                                                value={brandName}
-                                                onChange={(e) => setBrandName(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Slug Brand"
-                                                value={brandSlug}
-                                                onChange={(e) => setBrandSlug(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="URL Hình ảnh Brand"
-                                                value={brandImage}
-                                                onChange={(e) => setBrandImage(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Mô tả Brand"
-                                                value={brandDescription}
-                                                onChange={(e) => setBrandDescription(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Thêm Brand</button>
-                                        </form>
 
-                                        {/* Form thêm Category */}
-                                        <form onSubmit={handleAddCategory}>
-                                            <h3>Thêm Category</h3>
-                                            <input
-                                                type="text"
-                                                placeholder="Tên Category"
-                                                value={categoryName}
-                                                onChange={(e) => setCategoryName(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Slug Category"
-                                                value={categorySlug}
-                                                onChange={(e) => setCategorySlug(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Mô tả Category"
-                                                value={categoryDescription}
-                                                onChange={(e) => setCategoryDescription(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Thêm Category</button>
-                                        </form>
-
-                                        {/* Form thêm Color */}
-                                        <form onSubmit={handleAddColor}>
-                                            <h3>Thêm Color</h3>
-                                            <input
-                                                type="text"
-                                                placeholder="Tên Color"
-                                                value={colorName}
-                                                onChange={(e) => setColorName(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Thêm Color</button>
-                                        </form>
-
-                                        {/* Form thêm Size */}
-                                        <form onSubmit={handleAddSize}>
-                                            <h3>Thêm Size</h3>
-                                            <input
-                                                type="text"
-                                                placeholder="Tên Size (e.g., S, M, L, XL)"
-                                                value={sizeName}
-                                                onChange={(e) => setSizeName(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Thêm Size</button>
-                                        </form>
+                                    {/* Category Modal */}
+                                    <div className="modal fade" id="addCategoryModal" tabIndex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+                                        <div className="modal-dialog">
+                                            <div className="modal-content">
+                                                <div className="modal-header">
+                                                    <h5 className="modal-title" id="addCategoryModalLabel">Thêm Category</h5>
+                                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div className="modal-body">
+                                                    <form onSubmit={handleAddCategory}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="categoryName" className="form-label">Tên Category</label>
+                                                            <input type="text" className="form-control" id="categoryName" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} required />
+                                                        </div>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="categorySlug" className="form-label">Slug Category</label>
+                                                            <input type="text" className="form-control" id="categorySlug" value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} required />
+                                                        </div>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="categoryDescription" className="form-label">Mô tả Category</label>
+                                                            <input type="text" className="form-control" id="categoryDescription" value={categoryDescription} onChange={(e) => setCategoryDescription(e.target.value)} required />
+                                                        </div>
+                                                        <button type="submit" className="btn btn-primary">Thêm Category</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    {/* /Second column */}
+
+                                    {/* Color Modal */}
+                                    <div className="modal fade" id="addColorModal" tabIndex="-1" aria-labelledby="addColorModalLabel" aria-hidden="true">
+                                        <div className="modal-dialog">
+                                            <div className="modal-content">
+                                                <div className="modal-header">
+                                                    <h5 className="modal-title" id="addColorModalLabel">Thêm Color</h5>
+                                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div className="modal-body">
+                                                    <form onSubmit={handleAddColor}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="colorName" className="form-label">Tên Color</label>
+                                                            <input type="text" className="form-control" id="colorName" value={colorName} onChange={(e) => setColorName(e.target.value)} required />
+                                                        </div>
+                                                        <button type="submit" className="btn btn-primary">Thêm Color</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Size Modal */}
+                                    <div className="modal fade" id="addSizeModal" tabIndex="-1" aria-labelledby="addSizeModalLabel" aria-hidden="true">
+                                        <div className="modal-dialog">
+                                            <div className="modal-content">
+                                                <div className="modal-header">
+                                                    <h5 className="modal-title" id="addSizeModalLabel">Thêm Size</h5>
+                                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div className="modal-body">
+                                                    <form onSubmit={handleAddSize}>
+                                                        <div className="mb-3">
+                                                            <label htmlFor="sizeName" className="form-label">Tên Size</label>
+                                                            <input type="text" className="form-control" id="sizeName" value={sizeName} onChange={(e) => setSizeName(e.target.value)} required />
+                                                        </div>
+                                                        <button type="submit" className="btn btn-primary">Thêm Size</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Trigger buttons */}
+                                    <div className="d-flex justify-content-center gap-3">
+                                        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBrandModal">Thêm Brand</button>
+                                        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Thêm Category</button>
+                                        <button className="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addColorModal">Thêm Color</button>
+                                        <button className="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSizeModal">Thêm Size</button>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>

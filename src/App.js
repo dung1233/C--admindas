@@ -17,6 +17,8 @@ import Customer from './compoment/pages/User/Customer';
 import Producdetails from './compoment/pages/Products/Productdetails';
 import Checkout from './compoment/pages/Checkout';
 import Addvariant from './compoment/pages/Products/Addvariant';
+import Editproduct from './compoment/pages/Products/Editproduct';
+
 const App = () => {
   return (
     <Router>
@@ -30,7 +32,7 @@ const App = () => {
         <Route path="/Catenorylist" element={<Catenorylist />} />
         <Route path="/Oderlist" element={<Oderlist />} />
         <Route path="/Login" element={<Login />} />
-        <Route path='/Oderdetails' element={<Oderdetails />} />
+        <Route path="/OrderDetails/:orderId" element={<Oderdetails />} />
         <Route path='/Review' element={<Review />} />
         <Route path='/Chat' element={<Chat />} />
         <Route path='/Userlist' element={<Userlist />} />
@@ -40,6 +42,8 @@ const App = () => {
         <Route path='/Productdetails' element={<Producdetails />} />
         <Route path='/checkout' element={<Checkout />} />
         <Route path='/Addvariant' element={<Addvariant/>} />
+        <Route path='/Editproduct' element={<Editproduct />} />
+       
       </Routes>
     </Router>
   )
