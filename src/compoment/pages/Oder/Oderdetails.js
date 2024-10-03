@@ -8,8 +8,12 @@ const Oderdetails = () => {
     const navigate = useNavigate();
     const { order } = location.state || {};
     const [orderDetails, setOrderDetails] = useState(order);
-    const [isConfirmed, setIsConfirmed] = useState(false);
-
+    const [isConfirmed, setIsConfirmed] = useState(
+        order.status === 'Confirmed' || order.status === 'Picked up' || order.status === 'Dispatched'
+    );
+    const [isPickup, setIsPickUP] = useState(order.status === 'Pick up')
+    const [isDispatch, setDispatch] = useState(order.status === 'Dispatch')
+    const [isArrived, setArrived] = useState(order.status === 'Arrived')
     const [isDenied, setIsDenied] = useState(false);
     const [confirmationTime, setConfirmationTime] = useState(null);
     console.log('API 1', order)
@@ -77,9 +81,9 @@ const Oderdetails = () => {
             if (response.status === 200 || response.status === 204) {
                 console.log('Order confirmed:', response.data);
                 alert('Order confirmed successfully!');
-                 setIsConfirmed(true); 
-                 setConfirmationTime(new Date().toLocaleString());
-               // Điều hướng đến trang OrderList sau khi xác nhận
+                setIsConfirmed(true);
+                setConfirmationTime(new Date().toLocaleString());
+                // Điều hướng đến trang OrderList sau khi xác nhận
             } else {
                 console.error('Unexpected response:', response);
                 alert('Failed to confirm order.');
@@ -113,6 +117,74 @@ const Oderdetails = () => {
             alert('Failed to deny order.');
         }
     };
+    const handlePickupOrder = async () => {
+        try {
+            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/pickUp/${order.orderId}`);
+            console.log('Pick UP:', response.data);
+
+            if (response.status === 200 || response.status === 204) {
+                console.log('Order deny:', response.data);
+                alert('Order PIck UP successfully!');
+                setIsPickUP(true);
+
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to confirm order.');
+            }
+        } catch (error) {
+            console.error('Error denying order:', error);
+            alert('Failed to deny order.');
+        }
+    };
+    const handledispatchOrder = async () => {
+        try {
+            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/dispatch/${order.orderId}`);
+            console.log('dispatch:', response.data);
+
+            if (response.status === 200 || response.status === 204) {
+                console.log('Order deny:', response.data);
+                alert('Order dispatch successfully!');
+                setDispatch(true);
+
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to confirm order.');
+            }
+        } catch (error) {
+            console.error('Error denying order:', error);
+            alert('Failed to deny order.');
+        }
+    };
+
+    const handleArriveOrder = async () => {
+        try {
+            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/arrive/${order.orderId}`);
+            console.log('Package:', response.data);
+
+            if (response.status === 200 || response.status === 204) {
+                console.log('Order Package:', response.data);
+                alert('Order dispatch successfully!');
+                setArrived(true);
+
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to Package order.');
+            }
+        } catch (error) {
+            console.error('Error Package order:', error);
+            alert('Failed to Package order.');
+        }
+    };
+    useEffect(() => {
+        // Kiểm tra trạng thái đơn hàng khi trang được render
+        if (order.status) {
+            setIsConfirmed(order.status === 'Confirmed' || order.status === 'Picked up' || order.status === 'Dispatched' || order.status === 'Arrived');
+            setIsPickUP(order.status === 'Picked up' || order.status === 'Dispatched' || order.status === 'Arrived');
+            setDispatch(order.status === 'Dispatched' || order.status === 'Arrived');
+        }
+    }, [order.status]);
+
+
 
 
 
@@ -1519,14 +1591,16 @@ const Oderdetails = () => {
                                             </div>
 
                                         </div>
-                                        <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
-                                            <button onClick={handleConfirmOrder} className="btn btn-success">
-                                                Confirm Order
-                                            </button>
-                                            <button onClick={handleDenyOrder} className="btn btn-danger">
-                                                Deny Order
-                                            </button>
-                                        </div>
+                                        {order.status === 'pending' && (
+                                            <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
+                                                <button onClick={handleConfirmOrder} className="btn btn-success">
+                                                    Confirm Order
+                                                </button>
+                                                <button onClick={handleDenyOrder} className="btn btn-danger">
+                                                    Deny Order
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     {isConfirmed && (
                                         <div className="card mb-6">
@@ -1540,76 +1614,75 @@ const Oderdetails = () => {
                                                         <div className="timeline-event">
                                                             <div className="timeline-header">
                                                                 <h6 className="mb-0">
-                                                                    Order was placed (Order ID: #32543)
+                                                                    Order was placed (Order ID: #{order.orderId})
                                                                 </h6>
                                                                 <small className="text-muted">Confirmed at: {confirmationTime}</small>
+
+                                                                {/* Nếu chưa được pick-up, hiển thị nút pick-up */}
+                                                                {!isPickup && <small><button onClick={handlePickupOrder} className="btn btn-success">Confirm Pick-Up</button></small>}
                                                             </div>
                                                             <p className="mt-3">
                                                                 Your order has been placed successfully
                                                             </p>
                                                         </div>
                                                     </li>
-                                                    <li className="timeline-item timeline-item-transparent border-primary">
-                                                        <span className="timeline-point timeline-point-primary" />
-                                                        <div className="timeline-event">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">Pick-up</h6>
-                                                                <small className="text-muted">Wednesday 11:29 AM</small>
+
+                                                    {/* Kiểm tra và hiển thị bước pick-up */}
+                                                    {isPickup && (
+                                                        <li className="timeline-item timeline-item-transparent border-primary">
+                                                            <span className="timeline-point timeline-point-primary" />
+                                                            <div className="timeline-event">
+                                                                <div className="timeline-header">
+                                                                    <h6 className="mb-0">Pick-up</h6>
+                                                                    <small className="text-muted">Wednesday 11:29 AM</small>
+
+                                                                    {/* Nếu chưa được dispatch, hiển thị nút dispatch */}
+                                                                    {!isDispatch && <small><button onClick={handledispatchOrder} className="btn btn-success">Dispatch Order</button></small>}
+                                                                </div>
+                                                                <p className="mt-3 mb-3">Pick-up scheduled with courier</p>
                                                             </div>
-                                                            <p className="mt-3 mb-3">Pick-up scheduled with courier</p>
-                                                        </div>
-                                                    </li>
-                                                    <li className="timeline-item timeline-item-transparent border-primary">
-                                                        <span className="timeline-point timeline-point-primary" />
-                                                        <div className="timeline-event">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">Dispatched</h6>
-                                                                <small className="text-muted">Thursday 11:29 AM</small>
+                                                        </li>
+                                                    )}
+
+                                                    {/* Kiểm tra và hiển thị bước dispatch */}
+                                                    {isDispatch && (
+                                                        <li className="timeline-item timeline-item-transparent border-primary">
+                                                            <span className="timeline-point timeline-point-primary" />
+                                                            <div className="timeline-event">
+                                                                <div className="timeline-header">
+                                                                    <h6 className="mb-0">Dispatched</h6>
+                                                                    <small className="text-muted">Thursday 11:29 AM</small>
+
+                                                                    {/* Nếu chưa được arrived, hiển thị nút arrived */}
+                                                                    {!isArrived && <small><button onClick={handleArriveOrder} className="btn btn-success">Arrive Order</button></small>}
+                                                                </div>
+                                                                <p className="mt-3 mb-3">
+                                                                    Item has been picked up by courier
+                                                                </p>
                                                             </div>
-                                                            <p className="mt-3 mb-3">
-                                                                Item has been picked up by courier
-                                                            </p>
-                                                        </div>
-                                                    </li>
-                                                    <li className="timeline-item timeline-item-transparent border-primary">
-                                                        <span className="timeline-point timeline-point-primary" />
-                                                        <div className="timeline-event">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">Package arrived</h6>
-                                                                <small className="text-muted">Saturday 15:20 AM</small>
+                                                        </li>
+                                                    )}
+
+                                                    {/* Kiểm tra và hiển thị bước arrived */}
+                                                    {isArrived && (
+                                                        <li className="timeline-item timeline-item-transparent border-primary">
+                                                            <span className="timeline-point timeline-point-primary" />
+                                                            <div className="timeline-event">
+                                                                <div className="timeline-header">
+                                                                    <h6 className="mb-0">Package Arrived</h6>
+                                                                    <small className="text-muted">Arrived at destination</small>
+                                                                </div>
+                                                                <p className="mt-3 mb-3">
+                                                                    Package has arrived at its destination.
+                                                                </p>
                                                             </div>
-                                                            <p className="mt-3 mb-3">
-                                                                Package arrived at an Amazon facility, NY
-                                                            </p>
-                                                        </div>
-                                                    </li>
-                                                    <li className="timeline-item timeline-item-transparent border-left-dashed">
-                                                        <span className="timeline-point timeline-point-primary" />
-                                                        <div className="timeline-event">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">Dispatched for delivery</h6>
-                                                                <small className="text-muted">Today 14:12 PM</small>
-                                                            </div>
-                                                            <p className="mt-3 mb-3">
-                                                                Package has left an Amazon facility, NY
-                                                            </p>
-                                                        </div>
-                                                    </li>
-                                                    <li className="timeline-item timeline-item-transparent border-transparent pb-0">
-                                                        <span className="timeline-point timeline-point-secondary" />
-                                                        <div className="timeline-event pb-0">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">Delivery</h6>
-                                                            </div>
-                                                            <p className="mt-1 mb-0">
-                                                                Package will be delivered by tomorrow
-                                                            </p>
-                                                        </div>
-                                                    </li>
+                                                        </li>
+                                                    )}
                                                 </ul>
                                             </div>
                                         </div>
                                     )}
+
                                 </div>
 
                                 {order ? (
