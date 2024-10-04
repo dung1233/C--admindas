@@ -195,7 +195,7 @@ const Oderlist = () => {
                             </a>
                             <ul className="menu-sub">
                                 <li className="menu-item">
-                                    <a href="/" className="menu-link">
+                                    <a href="/Commerce" className="menu-link">
                                         <div className="text-truncate" data-i18n="Dashboard">
                                             Dashboard
                                         </div>
@@ -576,10 +576,7 @@ const Oderlist = () => {
                                                                                 View
                                                                             </Link>
                                                                         </a>
-                                                                        <a href="javascript:void(0);" className="dropdown-item delete-record"
-                                                                        >
-                                                                            Delete
-                                                                        </a>
+                                                                       
                                                                     </div>
                                                                 </div>
                                                             </td>

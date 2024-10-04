@@ -253,7 +253,7 @@ const UserAc = () => {
                                 </a>
                                 <ul className="menu-sub">
                                     <li className="menu-item active">
-                                        <a href="/" className="menu-link">
+                                        <a href="/Commerce" className="menu-link">
                                             <div className="text-truncate" data-i18n="Dashboard">
                                                 Dashboard
                                             </div>
@@ -708,7 +708,7 @@ const UserAc = () => {
                                                         <span className="dropdown-shortcuts-icon rounded-circle mb-3">
                                                             <i className="bx bx-pie-chart-alt-2 bx-26px text-heading" />
                                                         </span>
-                                                        <a href="index.html" className="stretched-link">
+                                                        <a href="/Commerce" className="stretched-link">
                                                             Dashboard
                                                         </a>
                                                         <small>User Dashboard</small>

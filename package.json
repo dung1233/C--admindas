@@ -12,7 +12,7 @@
     "react-dropzone": "^14.2.3",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.26.2",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "react-select": "^5.8.0",
     "react-tagify": "^1.0.7",
     "web-vitals": "^2.1.4"
