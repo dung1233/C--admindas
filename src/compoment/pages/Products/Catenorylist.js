@@ -180,7 +180,7 @@ const Catenorylist = () => {
                             </a>
                             <ul className="menu-sub">
                                 <li className="menu-item">
-                                    <a href="/" className="menu-link">
+                                    <a href="/Commerce" className="menu-link">
                                         <div className="text-truncate" data-i18n="Dashboard">
                                             Dashboard
                                         </div>
@@ -417,6 +417,11 @@ const Catenorylist = () => {
                                                                     <div className="avatar-wrapper me-3 rounded-2 bg-label-secondary">
                                                                         <div className="avatar">
                                                                             {/* Nếu bạn có hình ảnh cho category thì thay đổi src bên dưới */}
+                                                                            <img
+                                                                                src={category.image}
+                                                                                alt=""
+                                                                                className="rounded-circle"
+                                                                            />
 
                                                                         </div>
                                                                     </div>

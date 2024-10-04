@@ -26,7 +26,7 @@ const App = () => {
       {/* Định nghĩa Routes */}
       <Routes>
         {/* Trang Home */}
-        <Route path="/" element={<Commerce />} />
+        <Route path="/" element={<Login />} />
         <Route path="/Commerce" element={<Commerce />} />
         <Route path="/Product" element={<Product />} />
         <Route path="/Addproduct" element={<Addproduct />} />

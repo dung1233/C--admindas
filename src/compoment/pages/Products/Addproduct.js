@@ -6,7 +6,7 @@ import Select from 'react-select';
 import { useNavigate } from 'react-router-dom';
 const Addproduct = () => {
   const menuRef = useRef(null);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [menuState, setMenuState] = useState(() => {
     // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
     const savedMenuState = localStorage.getItem('menuState');
@@ -23,6 +23,7 @@ const Addproduct = () => {
   const [productSku, setProductSku] = useState('');
   const [productPrice, setProductPrice] = useState('');
   const [description, setDescription] = useState('');
+  const [productQuantity, setProductQuantity] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [image, setImage] = useState(null);
   const [imageURL, setImageURL] = useState('');
@@ -43,10 +44,9 @@ const Addproduct = () => {
       reader.readAsDataURL(file); // Đọc file ảnh
     }
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    // Chuẩn bị dữ liệu JSON
     const productData = {
       name: productTitle,
       slug: productSku,
@@ -55,8 +55,7 @@ const Addproduct = () => {
       image: imageURL, // URL của ảnh đã upload (sau khi upload)
       categoryId: category.value, // Lấy ID từ danh mục đã chọn
       brandId: vendor.value, // Lấy ID từ brand đã chọn
-      colorId: collection.value, // Lấy ID từ màu đã chọn
-      sizeId: status.value, // Lấy ID từ kích cỡ đã chọn
+
       // Các trường khác nếu cần
     };
 
@@ -71,13 +70,47 @@ const Addproduct = () => {
         }
       );
       console.log('Product added:', response.data);
-      
+
+      const productId = response.data.productId; // Lấy productId từ phản hồi
+
+      // Gọi hàm để tạo ProductVariant
+      await createProductVariant(productId);
+
       // Nếu thêm sản phẩm thành công, chuyển hướng đến trang khác
       navigate('/Product'); // Đổi /product-list thành trang bạn muốn chuyển hướng
     } catch (error) {
       console.error('Error adding product:', error);
     }
   };
+
+  // Hàm tạo ProductVariant
+  const createProductVariant = async (productId) => {
+    const productVariantData = {
+      productId, // Sử dụng productId vừa lấy từ phản hồi
+      colorId: collection.value, // ID của màu
+      sizeId: status.value, // ID của kích thước
+      stockQuantity: productQuantity, // Giá trị của số lượng (bạn cần đảm bảo đã có biến `productQuantity`)
+      // Các trường khác nếu cần, tùy thuộc vào cấu trúc của ProductVariant
+    };
+
+    try {
+      const variantResponse = await axios.post(
+        `https://projectky320240926105522.azurewebsites.net/api/ProductVariant`,
+        productVariantData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log('Product Variant added:', variantResponse.data);
+    } catch (error) {
+      console.error('Error adding product variant:', error);
+    }
+  };
+
+
+
 
   const fetchBrands = async () => {
     try {
@@ -175,6 +208,7 @@ const Addproduct = () => {
   const [category, setCategory] = useState(null);
   const [collection, setCollection] = useState(null);
   const [status, setStatus] = useState(null);
+
 
 
 
@@ -314,7 +348,7 @@ const Addproduct = () => {
 
             {/* Menu Inner */}
             <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-             
+
 
               <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
                 <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -325,7 +359,7 @@ const Addproduct = () => {
                 </a>
                 <ul className="menu-sub">
                   <li className="menu-item ">
-                    <a href="/" className="menu-link">
+                    <a href="/Commerce" className="menu-link">
                       <div className="text-truncate" data-i18n="Dashboard">
                         Dashboard
                       </div>
@@ -360,12 +394,12 @@ const Addproduct = () => {
                         </a>
                       </li>
                       <li className="menu-item ">
-                                            <a href="/Brandlist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Category List">
-                                                    Brand List
-                                                </div>
-                                            </a>
-                                        </li>
+                        <a href="/Brandlist" className="menu-link">
+                          <div className="text-truncate" data-i18n="Category List">
+                            Brand List
+                          </div>
+                        </a>
+                      </li>
                     </ul>
                   </li>
                   <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -391,87 +425,7 @@ const Addproduct = () => {
                       </li>
                     </ul>
                   </li>
-                  {/* <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
-                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
-                      <div className="text-truncate" data-i18n="Customer">
-                        Customer
-                      </div>
-                    </a>
-                    <ul className="menu-sub">
-                      <li className="menu-item">
-                        <a href="/Customer" className="menu-link">
-                          <div className="text-truncate" data-i18n="All Customers">
-                            All Customers
-                          </div>
-                        </a>
-                      </li>
-                      <li className="menu-item">
-                        <a href="javascript:void(0);" className="menu-link menu-toggle">
-                          <div className="text-truncate" data-i18n="Customer Details">
-                            Customer Details
-                          </div>
-                        </a>
-                        <ul className="menu-sub">
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-overview.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Overview">
-                                Overview
-                              </div>
-                            </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-security.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Security">
-                                Security
-                              </div>
-                            </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-billing.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Address & Billing">
-                                Address &amp; Billing
-                              </div>
-                            </a>
-                          </li>
-                          <li className="menu-item">
-                            <a
-                              href="app-ecommerce-customer-details-notifications.html"
-                              className="menu-link"
-                            >
-                              <div className="text-truncate" data-i18n="Notifications">
-                                Notifications
-                              </div>
-                            </a>
-                          </li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className="menu-item">
-                    <a href="app-ecommerce-manage-reviews.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Manage Reviews">
-                        Manage Reviews
-                      </div>
-                    </a>
-                  </li>
 
-                  <li className="menu-item">
-                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                      <div className="text-truncate" data-i18n="Settings">
-                        Settings
-                      </div>
-                    </a>
-
-                  </li> */}
                 </ul>
               </li>
 
@@ -499,7 +453,7 @@ const Addproduct = () => {
                   <i className="bx bx-menu bx-md" />
                 </a>
               </div>
-             
+
               {/* Search Small Screens */}
               <div className="navbar-search-wrapper search-input-wrapper d-none">
                 <span
@@ -581,7 +535,7 @@ const Addproduct = () => {
                     </div>
                     <div className="d-flex align-content-center flex-wrap gap-4">
                       <div className="d-flex gap-4">
-                        
+
                       </div>
                       <button type="submit" className="btn btn-primary">
                         Publish product
@@ -594,13 +548,13 @@ const Addproduct = () => {
                       <div className="col-12 col-lg-8">
                         <div className="card mb-6">
                           <div className="card-header">
-                            <h5 className="card-title mb-0">Thông tin sản phẩm</h5>
+                            <h5 className="card-title mb-0">Product</h5>
                           </div>
                           <div className="card-body">
                             {/* Tên sản phẩm */}
                             <div className="mb-6">
                               <label className="form-label" htmlFor="ecommerce-product-name">
-                                Tên sản phẩm
+                                Name
                               </label>
                               <input
                                 type="text"
@@ -633,7 +587,7 @@ const Addproduct = () => {
                               </div>
                               <div className="col">
                                 <label className="form-label" htmlFor="ecommerce-product-barcode">
-                                  Giá
+                                  Price
                                 </label>
                                 <input
                                   type="text"
@@ -650,7 +604,7 @@ const Addproduct = () => {
 
                             {/* Mô tả */}
                             <div>
-                              <label className="mb-1">Mô tả (không bắt buộc)</label>
+                              <label className="mb-1">Description</label>
                               <ReactQuill
                                 theme="snow"
                                 value={description}
@@ -663,14 +617,31 @@ const Addproduct = () => {
                             {/* Upload Ảnh */}
                             <div className="card mb-6">
                               <div className="card-header d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0 card-title">Ảnh sản phẩm</h5>
+                                <h5 className="mb-0 card-title">imageURL</h5>
                               </div>
                               <div className="card-body">
+                                {/* Thay đổi thành URL nhập liệu */}
                                 <input
-                                  type="file"
-                                  accept="image/*"
+                                  type="text"
                                   className="form-control"
-                                  onChange={handleFileChange}
+                                  placeholder="Nhập URL ảnh sản phẩm"
+                                  value={imageURL}
+                                  onChange={(e) => setImageURL(e.target.value)} // Cập nhật URL ảnh vào state
+                                />
+                              </div>
+                              <div className="col">
+                                <label className="form-label" htmlFor="ecommerce-product-quantity">
+                                  Quantity
+                                </label>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  id="ecommerce-product-quantity"
+                                  placeholder="Quantity"
+                                  name="productQuantity"
+                                  aria-label="Product Quantity"
+                                  value={productQuantity}
+                                  onChange={(e) => setProductQuantity(e.target.value)}
                                 />
                               </div>
                             </div>
