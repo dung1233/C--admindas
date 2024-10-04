@@ -147,58 +147,7 @@ export default function Userlist() {
 
                         {/* Menu Inner */}
                         <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-                            <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
-                                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
-                                    <i className="menu-icon tf-icons bx bx-home-smile"></i>
-                                    <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
-                                    <span className="badge rounded-pill bg-danger ms-auto">5</span>
-                                </a>
-                                <ul className="menu-sub">
-                                    <li className="menu-item">
-                                        <a href="index.html" className="menu-link">
-                                            <div className="text-truncate" data-i18n="Analytics">Analytics</div>
-                                        </a>
-                                    </li>
-                                    <li className="menu-item">
-                                        <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
-                                            <div className="text-truncate" data-i18n="CRM">CRM</div>
-                                        </a>
-                                    </li>
-                                    <li className="menu-item active">
-                                        <a
-                                            href="/Commerce"
-                                            target="_blank"
-                                            className="menu-link"
-                                        >
-                                            <div className="text-truncate" data-i18n="eCommerce">
-                                                eCommerce
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li className="menu-item">
-                                        <a
-                                            href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
-                                            target="_blank"
-                                            className="menu-link"
-                                        >
-                                            <div className="text-truncate" data-i18n="Logistics">
-                                                Logistics
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li className="menu-item">
-                                        <a
-                                            href="app-academy-dashboard.html"
-                                            target="_blank"
-                                            className="menu-link"
-                                        >
-                                            <div className="text-truncate" data-i18n="Academy">
-                                                Academy
-                                            </div>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+                          
 
                             <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
                                 <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -209,7 +158,7 @@ export default function Userlist() {
                                 </a>
                                 <ul className="menu-sub">
                                     <li className="menu-item active">
-                                        <a href="app-ecommerce-dashboard.html" className="menu-link">
+                                        <a href="/" className="menu-link">
                                             <div className="text-truncate" data-i18n="Dashboard">
                                                 Dashboard
                                             </div>
@@ -404,7 +353,7 @@ export default function Userlist() {
                                         </a>
                                         <ul class="menu-sub">
                                             <li class="menu-item active">
-                                                <a href="app-user-list.html" class="menu-link">
+                                                <a href="/Userlist" class="menu-link">
                                                     <div class="text-truncate" data-i18n="List">List</div>
                                                 </a>
                                             </li>
