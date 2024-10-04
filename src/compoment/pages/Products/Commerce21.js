@@ -27,7 +27,6 @@ const Commerce = () => {
         setNotificationDropdownOpen(false);
     };
 
-
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('jwtToken'); // Lấy token từ localStorage
@@ -43,6 +42,7 @@ const Commerce = () => {
             console.error('Lỗi khi đăng xuất:', error);
         }
     };
+
     const menuRef = useRef(null);
     const [menuState, setMenuState] = useState({
         dashboard: false,
@@ -173,7 +173,58 @@ const Commerce = () => {
 
                         {/* Menu Inner */}
                         <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-
+                            <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
+                                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
+                                    <i className="menu-icon tf-icons bx bx-home-smile"></i>
+                                    <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
+                                    <span className="badge rounded-pill bg-danger ms-auto">5</span>
+                                </a>
+                                <ul className="menu-sub">
+                                    <li className="menu-item">
+                                        <a href="index.html" className="menu-link">
+                                            <div className="text-truncate" data-i18n="Analytics">Analytics</div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
+                                            <div className="text-truncate" data-i18n="CRM">CRM</div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item active">
+                                        <a
+                                            href="/Commerce"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="eCommerce">
+                                                eCommerce
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a
+                                            href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="Logistics">
+                                                Logistics
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a
+                                            href="app-academy-dashboard.html"
+                                            target="_blank"
+                                            className="menu-link"
+                                        >
+                                            <div className="text-truncate" data-i18n="Academy">
+                                                Academy
+                                            </div>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
 
                             <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
                                 <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -212,26 +263,13 @@ const Commerce = () => {
                                                 </a>
                                             </li>
                                             <li className="menu-item">
-                                                <a href="/Editproduct" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Add Product">
-                                                        Edit Product
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
                                                 <a href="/Catenorylist" className="menu-link">
                                                     <div className="text-truncate" data-i18n="Category List">
                                                         Category List
                                                     </div>
                                                 </a>
                                             </li>
-                                            <li className="menu-item">
-                                                <a href="/Brandlist" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Category List">
-                                                        Brand List
-                                                    </div>
-                                                </a>
-                                            </li>
+                                            
                                         </ul>
                                     </li>
                                     <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -257,7 +295,133 @@ const Commerce = () => {
                                             </li>
                                         </ul>
                                     </li>
+                                    <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
+                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
+                                            <div className="text-truncate" data-i18n="Customer">
+                                                Customer
+                                            </div>
+                                        </a>
+                                        <ul className="menu-sub">
+                                            <li className="menu-item">
+                                                <a href="/Customer" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="All Customers">
+                                                        All Customers
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="javascript:void(0);" className="menu-link menu-toggle">
+                                                    <div className="text-truncate" data-i18n="Customer Details">
+                                                        Customer Details
+                                                    </div>
+                                                </a>
+                                                <ul className="menu-sub">
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-overview.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Overview">
+                                                                Overview
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-security.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Security">
+                                                                Security
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-billing.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Address & Billing">
+                                                                Address &amp; Billing
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                    <li className="menu-item">
+                                                        <a
+                                                            href="app-ecommerce-customer-details-notifications.html"
+                                                            className="menu-link"
+                                                        >
+                                                            <div className="text-truncate" data-i18n="Notifications">
+                                                                Notifications
+                                                            </div>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li className="menu-item">
+                                        <a href="app-ecommerce-manage-reviews.html" className="menu-link">
+                                            <div className="text-truncate" data-i18n="Manage Reviews">
+                                                Manage Reviews
+                                            </div>
+                                        </a>
+                                    </li>
 
+                                    <li className={`menu-item ${menuState.Settings ? 'open' : ''}`}>
+                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Settings'); }}>
+                                            <div className="text-truncate" data-i18n="Settings">
+                                                Settings
+                                            </div>
+                                        </a>
+                                        <ul className="menu-sub">
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-settings-detail.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Store Details">
+                                                        Store Details
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-settings-payments.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Payments">
+                                                        Payments
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-settings-checkout.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Checkout">
+                                                        Checkout
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-settings-shipping.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Shipping & Delivery">
+                                                        Shipping &amp; Delivery
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a href="app-ecommerce-settings-locations.html" className="menu-link">
+                                                    <div className="text-truncate" data-i18n="Locations">
+                                                        Locations
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li className="menu-item">
+                                                <a
+                                                    href="app-ecommerce-settings-notifications.html"
+                                                    className="menu-link"
+                                                >
+                                                    <div className="text-truncate" data-i18n="Notifications">
+                                                        Notifications
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
                                 </ul>
                                 <li className={`menu-item ${menuState.Users ? 'open' : ''}`}>
                                     <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Users'); }}>
@@ -361,7 +525,7 @@ const Commerce = () => {
                                                 onClick={toggleUserDropdown}
                                                 onBlur={closeDropdowns}
                                             >
-                                                <img style={{width:'20%'}}
+                                                <img style={{ width: '20%' }}
                                                     src="../assets/img/avatars/1.png"
                                                     alt="User Avatar"
                                                     className="rounded-circle"

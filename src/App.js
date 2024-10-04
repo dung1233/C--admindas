@@ -18,6 +18,7 @@ import Producdetails from './compoment/pages/Products/Productdetails';
 import Checkout from './compoment/pages/Checkout';
 import Addvariant from './compoment/pages/Products/Addvariant';
 import Editproduct from './compoment/pages/Products/Editproduct';
+import Brandlist from './compoment/pages/Products/Brandlist';
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
         <Route path='/checkout' element={<Checkout />} />
         <Route path='/Addvariant' element={<Addvariant/>} />
         <Route path='/Editproduct' element={<Editproduct />} />
+        <Route path='/Brandlist' element={<Brandlist />} />
        
       </Routes>
     </Router>

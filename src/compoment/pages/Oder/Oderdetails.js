@@ -73,6 +73,16 @@ const Oderdetails = () => {
 
         fetchDetailsForOrderItems();
     }, [order]);
+
+
+    const fetchOrderDetails = async () => {
+        try {
+          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${order.orderId}`);
+          setOrderDetails(response.data); // Cập nhật lại state với dữ liệu mới
+        } catch (error) {
+          console.error('Error fetching updated order:', error);
+        }
+      };
     const handleConfirmOrder = async () => {
         try {
             const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/confirm/${order.orderId}`);
@@ -81,8 +91,10 @@ const Oderdetails = () => {
             if (response.status === 200 || response.status === 204) {
                 console.log('Order confirmed:', response.data);
                 alert('Order confirmed successfully!');
+                await fetchOrderDetails();
                 setIsConfirmed(true);
                 setConfirmationTime(new Date().toLocaleString());
+                
                 // Điều hướng đến trang OrderList sau khi xác nhận
             } else {
                 console.error('Unexpected response:', response);
@@ -107,6 +119,7 @@ const Oderdetails = () => {
                 console.log('Order deny:', response.data);
                 alert('Order deny successfully!');
                 setIsDenied(true);
+
                 navigate('/Oderlist'); // Điều hướng đến trang OrderList sau khi xác nhận
             } else {
                 console.error('Unexpected response:', response);
@@ -401,7 +414,7 @@ const Oderdetails = () => {
                             </a>
                             <ul className="menu-sub">
                                 <li className="menu-item">
-                                    <a href="app-ecommerce-dashboard.html" className="menu-link">
+                                    <a href="/" className="menu-link">
                                         <div className="text-truncate" data-i18n="Dashboard">
                                             Dashboard
                                         </div>
@@ -435,6 +448,13 @@ const Oderdetails = () => {
                                                 </div>
                                             </a>
                                         </li>
+                                        <li className="menu-item ">
+                                            <a href="/Brandlist" className="menu-link">
+                                                <div className="text-truncate" data-i18n="Category List">
+                                                    Brand List
+                                                </div>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                                 <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -460,71 +480,7 @@ const Oderdetails = () => {
                                         </li>
                                     </ul>
                                 </li>
-                                <li className="menu-item">
-                                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                                        <div className="text-truncate" data-i18n="Customer">
-                                            Customer
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-customer-all.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="All Customers">
-                                                    All Customers
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="javascript:void(0);" className="menu-link menu-toggle">
-                                                <div className="text-truncate" data-i18n="Customer Details">
-                                                    Customer Details
-                                                </div>
-                                            </a>
-                                            <ul className="menu-sub">
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-overview.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Overview">
-                                                            Overview
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-security.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Security">
-                                                            Security
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-billing.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Address & Billing">
-                                                            Address &amp; Billing
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-notifications.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Notifications">
-                                                            Notifications
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
+                                
                                 <li className="menu-item">
                                     <a href="app-ecommerce-manage-reviews.html" className="menu-link">
                                         <div className="text-truncate" data-i18n="Manage Reviews">
@@ -532,67 +488,7 @@ const Oderdetails = () => {
                                         </div>
                                     </a>
                                 </li>
-                                <li className="menu-item">
-                                    <a href="app-ecommerce-referral.html" className="menu-link">
-                                        <div className="text-truncate" data-i18n="Referrals">
-                                            Referrals
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                                        <div className="text-truncate" data-i18n="Settings">
-                                            Settings
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-detail.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Store Details">
-                                                    Store Details
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-payments.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Payments">
-                                                    Payments
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-checkout.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Checkout">
-                                                    Checkout
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-shipping.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Shipping & Delivery">
-                                                    Shipping &amp; Delivery
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-locations.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Locations">
-                                                    Locations
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a
-                                                href="app-ecommerce-settings-notifications.html"
-                                                className="menu-link"
-                                            >
-                                                <div className="text-truncate" data-i18n="Notifications">
-                                                    Notifications
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
+                               
                             </ul>
                         </li>
 
@@ -620,730 +516,7 @@ const Oderdetails = () => {
                                 <i className="bx bx-menu bx-md" />
                             </a>
                         </div>
-                        <div
-                            className="navbar-nav-right d-flex align-items-center"
-                            id="navbar-collapse"
-                        >
-                            {/* Search */}
-                            <div className="navbar-nav align-items-center">
-                                <div className="nav-item navbar-search-wrapper mb-0">
-                                    <a
-                                        className="nav-item nav-link search-toggler px-0"
-                                        href="javascript:void(0);"
-                                    >
-                                        <i className="bx bx-search bx-md" />
-                                        <span className="d-none d-md-inline-block text-muted fw-normal ms-4">
-                                            Search (Ctrl+/)
-                                        </span>
-                                    </a>
-                                </div>
-                            </div>
-                            {/* /Search */}
-                            <ul className="navbar-nav flex-row align-items-center ms-auto">
-                                {/* Language */}
-                                <li className="nav-item dropdown-language dropdown me-2 me-xl-0">
-                                    <a
-                                        className="nav-link dropdown-toggle hide-arrow"
-                                        href="javascript:void(0);"
-                                        data-bs-toggle="dropdown"
-                                    >
-                                        <i className="bx bx-globe bx-md" />
-                                    </a>
-                                    <ul className="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a
-                                                className="dropdown-item active"
-                                                href="javascript:void(0);"
-                                                data-language="en"
-                                                data-text-direction="ltr"
-                                            >
-                                                <span>English</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="javascript:void(0);"
-                                                data-language="fr"
-                                                data-text-direction="ltr"
-                                            >
-                                                <span>French</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="javascript:void(0);"
-                                                data-language="ar"
-                                                data-text-direction="rtl"
-                                            >
-                                                <span>Arabic</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="javascript:void(0);"
-                                                data-language="de"
-                                                data-text-direction="ltr"
-                                            >
-                                                <span>German</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                {/* /Language */}
-                                {/* Style Switcher */}
-                                <li className="nav-item dropdown-style-switcher dropdown me-2 me-xl-0">
-                                    <a
-                                        className="nav-link dropdown-toggle hide-arrow"
-                                        href="javascript:void(0);"
-                                        data-bs-toggle="dropdown"
-                                    >
-                                        <i className="bx bx-md bx-sun" />
-                                    </a>
-                                    <ul className="dropdown-menu dropdown-menu-end dropdown-styles">
-                                        <li>
-                                            <a
-                                                className="dropdown-item active"
-                                                href="javascript:void(0);"
-                                                data-theme="light"
-                                            >
-                                                <span>
-                                                    <i className="bx bx-sun bx-md me-3" />
-                                                    <font _mstmutation={1}>Light</font>
-                                                </span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="javascript:void(0);"
-                                                data-theme="dark"
-                                            >
-                                                <span>
-                                                    <i className="bx bx-moon bx-md me-3" />
-                                                    <font _mstmutation={1}>Dark</font>
-                                                </span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="javascript:void(0);"
-                                                data-theme="system"
-                                            >
-                                                <span>
-                                                    <i className="bx bx-desktop bx-md me-3" />
-                                                    <font _mstmutation={1}>System</font>
-                                                </span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                {/* / Style Switcher*/}
-                                {/* Quick links  */}
-                                <li className="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
-                                    <a
-                                        className="nav-link dropdown-toggle hide-arrow"
-                                        href="javascript:void(0);"
-                                        data-bs-toggle="dropdown"
-                                        data-bs-auto-close="outside"
-                                        aria-expanded="false"
-                                    >
-                                        <i className="bx bx-grid-alt bx-md" />
-                                    </a>
-                                    <div className="dropdown-menu dropdown-menu-end p-0">
-                                        <div className="dropdown-menu-header border-bottom">
-                                            <div className="dropdown-header d-flex align-items-center py-3">
-                                                <h6 className="mb-0 me-auto">Shortcuts</h6>
-                                                <a
-                                                    href="javascript:void(0)"
-                                                    className="dropdown-shortcuts-add py-2"
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top"
-                                                    aria-label="Add shortcuts"
-                                                    data-bs-original-title="Add shortcuts"
-                                                    _mstaria-label={211718}
-                                                >
-                                                    <i className="bx bx-plus-circle text-heading" />
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div className="dropdown-shortcuts-list scrollable-container ps">
-                                            <div className="row row-bordered overflow-visible g-0">
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-calendar bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="app-calendar.html" className="stretched-link">
-                                                        Calendar
-                                                    </a>
-                                                    <small>Appointments</small>
-                                                </div>
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-food-menu bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="app-invoice-list.html" className="stretched-link">
-                                                        Invoice App
-                                                    </a>
-                                                    <small>Manage Accounts</small>
-                                                </div>
-                                            </div>
-                                            <div className="row row-bordered overflow-visible g-0">
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-user bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="app-user-list.html" className="stretched-link">
-                                                        User App
-                                                    </a>
-                                                    <small>Manage Users</small>
-                                                </div>
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-check-shield bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="app-access-roles.html" className="stretched-link">
-                                                        Role Management
-                                                    </a>
-                                                    <small>Permission</small>
-                                                </div>
-                                            </div>
-                                            <div className="row row-bordered overflow-visible g-0">
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-pie-chart-alt-2 bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="index.html" className="stretched-link">
-                                                        Dashboard
-                                                    </a>
-                                                    <small>User Dashboard</small>
-                                                </div>
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-cog bx-26px text-heading" />
-                                                    </span>
-                                                    <a
-                                                        href="pages-account-settings-account.html"
-                                                        className="stretched-link"
-                                                    >
-                                                        Setting
-                                                    </a>
-                                                    <small>Account Settings</small>
-                                                </div>
-                                            </div>
-                                            <div className="row row-bordered overflow-visible g-0">
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-help-circle bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="pages-faq.html" className="stretched-link">
-                                                        FAQs
-                                                    </a>
-                                                    <small>FAQs &amp; Articles</small>
-                                                </div>
-                                                <div className="dropdown-shortcuts-item col">
-                                                    <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                        <i className="bx bx-window-open bx-26px text-heading" />
-                                                    </span>
-                                                    <a href="modal-examples.html" className="stretched-link">
-                                                        Modals
-                                                    </a>
-                                                    <small>Useful Popups</small>
-                                                </div>
-                                            </div>
-                                            <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                                                <div
-                                                    className="ps__thumb-x"
-                                                    tabIndex={0}
-                                                    style={{ left: 0, width: 0 }}
-                                                />
-                                            </div>
-                                            <div className="ps__rail-y" style={{ top: 0, right: 0 }}>
-                                                <div
-                                                    className="ps__thumb-y"
-                                                    tabIndex={0}
-                                                    style={{ top: 0, height: 0 }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                {/* Quick links */}
-                                {/* Notification */}
-                                <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
-                                    <a
-                                        className="nav-link dropdown-toggle hide-arrow"
-                                        href="javascript:void(0);"
-                                        data-bs-toggle="dropdown"
-                                        data-bs-auto-close="outside"
-                                        aria-expanded="false"
-                                    >
-                                        <span className="position-relative">
-                                            <i className="bx bx-bell bx-md" />
-                                            <span className="badge rounded-pill bg-danger badge-dot badge-notifications border" />
-                                        </span>
-                                    </a>
-                                    <ul className="dropdown-menu dropdown-menu-end p-0">
-                                        <li className="dropdown-menu-header border-bottom">
-                                            <div className="dropdown-header d-flex align-items-center py-3">
-                                                <h6 className="mb-0 me-auto">Notification</h6>
-                                                <div className="d-flex align-items-center h6 mb-0">
-                                                    <span className="badge bg-label-primary me-2">8 New</span>
-                                                    <a
-                                                        href="javascript:void(0)"
-                                                        className="dropdown-notifications-all p-2"
-                                                        data-bs-toggle="tooltip"
-                                                        data-bs-placement="top"
-                                                        aria-label="Mark all as read"
-                                                        data-bs-original-title="Mark all as read"
-                                                        _mstaria-label={226824}
-                                                    >
-                                                        <i className="bx bx-envelope-open text-heading" />
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li className="dropdown-notifications-list scrollable-container ps">
-                                            <ul className="list-group list-group-flush">
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <img
-                                                                    src="../../assets/img/avatars/1.png"
-                                                                    alt=""
-                                                                    className="rounded-circle"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">Congratulation Lettie 🎉</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                Won the monthly best seller gold badge
-                                                            </small>
-                                                            <small className="text-muted">1h ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <span className="avatar-initial rounded-circle bg-label-danger">
-                                                                    CF
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">Charles Franklin</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                Accepted your connection
-                                                            </small>
-                                                            <small className="text-muted">12hr ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <img
-                                                                    src="../../assets/img/avatars/2.png"
-                                                                    alt=""
-                                                                    className="rounded-circle"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">New Message ✉️</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                You have new message from Natalie
-                                                            </small>
-                                                            <small className="text-muted">1h ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <span className="avatar-initial rounded-circle bg-label-success">
-                                                                    <i className="bx bx-cart" />
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">
-                                                                Whoo! You have new order 🛒{" "}
-                                                            </h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                ACME Inc. made new order $1,154
-                                                            </small>
-                                                            <small className="text-muted">1 day ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <img
-                                                                    src="../../assets/img/avatars/9.png"
-                                                                    alt=""
-                                                                    className="rounded-circle"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">
-                                                                Application has been approved 🚀{" "}
-                                                            </h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                Your ABC project application has been approved.
-                                                            </small>
-                                                            <small className="text-muted">2 days ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <span className="avatar-initial rounded-circle bg-label-success">
-                                                                    <i className="bx bx-pie-chart-alt" />
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">
-                                                                Monthly report is generated
-                                                            </h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                July monthly financial report is generated{" "}
-                                                            </small>
-                                                            <small className="text-muted">3 days ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <img
-                                                                    src="../../assets/img/avatars/5.png"
-                                                                    alt=""
-                                                                    className="rounded-circle"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">Send connection request</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                Peter sent you connection request
-                                                            </small>
-                                                            <small className="text-muted">4 days ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <img
-                                                                    src="../../assets/img/avatars/6.png"
-                                                                    alt=""
-                                                                    className="rounded-circle"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">New message from Jane</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                Your have new message from Jane
-                                                            </small>
-                                                            <small className="text-muted">5 days ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                                                    <div className="d-flex">
-                                                        <div className="flex-shrink-0 me-3">
-                                                            <div className="avatar">
-                                                                <span className="avatar-initial rounded-circle bg-label-warning">
-                                                                    <i className="bx bx-error" />
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <h6 className="small mb-0">CPU is running high</h6>
-                                                            <small className="mb-1 d-block text-body">
-                                                                CPU Utilization Percent is currently at 88.63%,
-                                                            </small>
-                                                            <small className="text-muted">5 days ago</small>
-                                                        </div>
-                                                        <div className="flex-shrink-0 dropdown-notifications-actions">
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-read"
-                                                            >
-                                                                <span className="badge badge-dot" />
-                                                            </a>
-                                                            <a
-                                                                href="javascript:void(0)"
-                                                                className="dropdown-notifications-archive"
-                                                            >
-                                                                <span className="bx bx-x" />
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                            <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                                                <div
-                                                    className="ps__thumb-x"
-                                                    tabIndex={0}
-                                                    style={{ left: 0, width: 0 }}
-                                                />
-                                            </div>
-                                            <div className="ps__rail-y" style={{ top: 0, right: 0 }}>
-                                                <div
-                                                    className="ps__thumb-y"
-                                                    tabIndex={0}
-                                                    style={{ top: 0, height: 0 }}
-                                                />
-                                            </div>
-                                        </li>
-                                        <li className="border-top">
-                                            <div className="d-grid p-4">
-                                                <a
-                                                    className="btn btn-primary btn-sm d-flex"
-                                                    href="javascript:void(0);"
-                                                >
-                                                    <small className="align-middle">View all notifications</small>
-                                                </a>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </li>
-                                {/*/ Notification */}
-                                {/* User */}
-                                <li className="nav-item navbar-dropdown dropdown-user dropdown">
-                                    <a
-                                        className="nav-link dropdown-toggle hide-arrow p-0"
-                                        href="javascript:void(0);"
-                                        data-bs-toggle="dropdown"
-                                    >
-                                        <div className="avatar avatar-online">
-                                            <img
-                                                src="../../assets/img/avatars/1.png"
-                                                alt=""
-                                                className="w-px-40 h-auto rounded-circle"
-                                            />
-                                        </div>
-                                    </a>
-                                    <ul className="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="pages-account-settings-account.html"
-                                            >
-                                                <div className="d-flex">
-                                                    <div className="flex-shrink-0 me-3">
-                                                        <div className="avatar avatar-online">
-                                                            <img
-                                                                src="../../assets/img/avatars/1.png"
-                                                                alt=""
-                                                                className="w-px-40 h-auto rounded-circle"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-grow-1">
-                                                        <h6 className="mb-0">John Doe</h6>
-                                                        <small className="text-muted">Admin</small>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <div className="dropdown-divider my-1" />
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="pages-profile-user.html">
-                                                <i className="bx bx-user bx-md me-3" />
-                                                <span>My Profile</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="pages-account-settings-account.html"
-                                            >
-                                                <i className="bx bx-cog bx-md me-3" />
-                                                <span>Settings</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="pages-account-settings-billing.html"
-                                            >
-                                                <span className="d-flex align-items-center align-middle">
-                                                    <i className="flex-shrink-0 bx bx-credit-card bx-md me-3" />
-                                                    <span className="flex-grow-1 align-middle">Billing Plan</span>
-                                                    <span className="flex-shrink-0 badge rounded-pill bg-danger">
-                                                        4
-                                                    </span>
-                                                </span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <div className="dropdown-divider my-1" />
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="pages-pricing.html">
-                                                <i className="bx bx-dollar bx-md me-3" />
-                                                <span>Pricing</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="pages-faq.html">
-                                                <i className="bx bx-help-circle bx-md me-3" />
-                                                <span>FAQ</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <div className="dropdown-divider my-1" />
-                                        </li>
-                                        <li>
-                                            <a
-                                                className="dropdown-item"
-                                                href="auth-login-cover.html"
-                                                target="_blank"
-                                            >
-                                                <i className="bx bx-power-off bx-md me-3" />
-                                                <span>Log Out</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                {/*/ User */}
-                            </ul>
-                        </div>
+                        
                         {/* Search Small Screens */}
                         <div className="navbar-search-wrapper search-input-wrapper d-none">
                             <span
@@ -1560,7 +733,8 @@ const Oderdetails = () => {
                                                                     </td>
                                                                     {/* Hiển thị tổng giá tiền */}
                                                                     <td>
-                                                                        <span className="text-body">${item.price * item.quantity}</span>
+                                                                    <span className="text-body">${(item.price * item.quantity).toFixed(2)}</span>
+
                                                                     </td>
                                                                 </tr>
                                                             ))
@@ -1576,22 +750,19 @@ const Oderdetails = () => {
                                                 <div style={{ width: "1%" }} />
                                             </div>
                                             <div className="d-flex justify-content-end align-items-center m-6 mb-2">
-                                                {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
-                                                    orderDetails.orderItems.map((item) => (
+                                               
                                                         <div className="order-calculations">
                                                             <div className="d-flex justify-content-start">
                                                                 <h6 className="w-px-100 mb-0">Total:</h6>
-                                                                <h6 className="mb-0">${item.price * item.quantity}</h6>
+                                                                <h6 className="mb-0">${order.totalAmount}</h6>
                                                             </div>
                                                         </div>
-                                                    ))
-                                                ) : (
-                                                    <p>No order details available.</p>
-                                                )}
+                                                  
+                                        
                                             </div>
 
                                         </div>
-                                        {order.status === 'pending' && (
+                                        {orderDetails.status === 'pending' && (
                                             <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
                                                 <button onClick={handleConfirmOrder} className="btn btn-success">
                                                     Confirm Order
@@ -1616,7 +787,7 @@ const Oderdetails = () => {
                                                                 <h6 className="mb-0">
                                                                     Order was placed (Order ID: #{order.orderId})
                                                                 </h6>
-                                                                <small className="text-muted">Confirmed at: {confirmationTime}</small>
+                                                                <small className="text-muted">Confirmed at:{confirmationTime}</small>
 
                                                                 {/* Nếu chưa được pick-up, hiển thị nút pick-up */}
                                                                 {!isPickup && <small><button onClick={handlePickupOrder} className="btn btn-success">Confirm Pick-Up</button></small>}
@@ -1634,7 +805,7 @@ const Oderdetails = () => {
                                                             <div className="timeline-event">
                                                                 <div className="timeline-header">
                                                                     <h6 className="mb-0">Pick-up</h6>
-                                                                    <small className="text-muted">Wednesday 11:29 AM</small>
+                                                                    <small className="text-muted">{confirmationTime}</small>
 
                                                                     {/* Nếu chưa được dispatch, hiển thị nút dispatch */}
                                                                     {!isDispatch && <small><button onClick={handledispatchOrder} className="btn btn-success">Dispatch Order</button></small>}
@@ -1651,7 +822,7 @@ const Oderdetails = () => {
                                                             <div className="timeline-event">
                                                                 <div className="timeline-header">
                                                                     <h6 className="mb-0">Dispatched</h6>
-                                                                    <small className="text-muted">Thursday 11:29 AM</small>
+                                                                    <small className="text-muted">{confirmationTime}</small>
 
                                                                     {/* Nếu chưa được arrived, hiển thị nút arrived */}
                                                                     {!isArrived && <small><button onClick={handleArriveOrder} className="btn btn-success">Arrive Order</button></small>}

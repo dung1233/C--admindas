@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 const Product = () => {
   const menuRef = useRef(null);
+  const [allProductsTotal, setAllProductsTotal] = useState(0);
+  const [allProductsCount, setAllProductsCount] = useState(0);
+  const [allBrandsCount, setAllBrandsCount] = useState(0);
+  const [allProductVariantsCount, setAllProductVariantsCount] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [menuState, setMenuState] = useState(() => {
     // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
     const savedMenuState = localStorage.getItem('menuState');
@@ -20,6 +25,36 @@ const Product = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const fetchData = async () => {
+    try {
+      const productResponse = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Product');
+      const brandResponse = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Brand');
+      const productVariantResponse = await axios.get('https://projectky320240926105522.azurewebsites.net/api/ProductVariant');
+      
+      // Assuming response.data is an array of products, brands, etc.
+      const allProducts = productResponse.data || [];
+      const allBrands = brandResponse.data || [];
+      const allProductVariants = productVariantResponse.data || [];
+
+      // Calculate counts and total price
+      const totalProductCount = allProducts.length;
+      const totalBrandCount = allBrands.length;
+      const totalProductVariantCount = allProductVariants.length;
+      const totalPriceValue = allProducts.reduce((acc, item) => acc + item.price, 0);
+
+      // Set state
+      setAllProductsCount(totalProductCount);
+      setAllBrandsCount(totalBrandCount);
+      setAllProductVariantsCount(totalProductVariantCount);
+      setTotalPrice(totalPriceValue);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
   const fetchProducts = async () => {
     try {
       const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Product');
@@ -29,7 +64,7 @@ const Product = () => {
         // Đảm bảo `productData` là một mảng trước khi lưu vào state
         if (Array.isArray(productData)) {
           setProducts(productData);
-          console.log("API " , response.productData)
+          console.log("API ", response.productData)
         } else {
           console.error('Dữ liệu sản phẩm không phải mảng:', productData);
           setError('Dữ liệu sản phẩm không hợp lệ');
@@ -62,7 +97,7 @@ const Product = () => {
     // Gọi API khi component được render
     fetchProducts();
   }, []);
-  
+
   // Hàm xử lý toggle cho từng menu
   const handleMenuToggle = (menuName) => {
     setMenuState((prevState) => {
@@ -196,58 +231,7 @@ const Product = () => {
 
             {/* Menu Inner */}
             <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-              <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
-                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
-                  <i className="menu-icon tf-icons bx bx-home-smile"></i>
-                  <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
-                  <span className="badge rounded-pill bg-danger ms-auto">5</span>
-                </a>
-                <ul className="menu-sub">
-                  <li className="menu-item">
-                    <a href="index.html" className="menu-link">
-                      <div className="text-truncate" data-i18n="Analytics">Analytics</div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
-                      <div className="text-truncate" data-i18n="CRM">CRM</div>
-                    </a>
-                  </li>
-                  <li className="menu-item active">
-                    <a
-                      href="/Commerce"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="eCommerce">
-                        eCommerce
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Logistics">
-                        Logistics
-                      </div>
-                    </a>
-                  </li>
-                  <li className="menu-item">
-                    <a
-                      href="app-academy-dashboard.html"
-                      target="_blank"
-                      className="menu-link"
-                    >
-                      <div className="text-truncate" data-i18n="Academy">
-                        Academy
-                      </div>
-                    </a>
-                  </li>
-                </ul>
-              </li>
+
 
               <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
                 <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -258,7 +242,7 @@ const Product = () => {
                 </a>
                 <ul className="menu-sub">
                   <li className="menu-item ">
-                    <a href="app-ecommerce-dashboard.html" className="menu-link">
+                    <a href="/" className="menu-link">
                       <div className="text-truncate" data-i18n="Dashboard">
                         Dashboard
                       </div>
@@ -289,6 +273,13 @@ const Product = () => {
                         <a href="/Catenorylist" className="menu-link">
                           <div className="text-truncate" data-i18n="Category List">
                             Category List
+                          </div>
+                        </a>
+                      </li>
+                      <li className="menu-item">
+                        <a href="/Brandlist" className="menu-link">
+                          <div className="text-truncate" data-i18n="Category List">
+                            Brand List
                           </div>
                         </a>
                       </li>
@@ -464,728 +455,7 @@ const Product = () => {
                   <i className="bx bx-menu bx-md" />
                 </a>
               </div>
-              <div
-                className="navbar-nav-right d-flex align-items-center"
-                id="navbar-collapse"
-              >
-                {/* Search */}
-                <div className="navbar-nav align-items-center">
-                  <div className="nav-item navbar-search-wrapper mb-0">
-                    <a
-                      className="nav-item nav-link search-toggler px-0"
-                      href="javascript:void(0);"
-                    >
-                      <i className="bx bx-search bx-md" />
-                      <span className="d-none d-md-inline-block text-muted fw-normal ms-4">
-                        Search (Ctrl+/)
-                      </span>
-                    </a>
-                  </div>
-                </div>
-                {/* /Search */}
-                <ul className="navbar-nav flex-row align-items-center ms-auto">
-                  {/* Language */}
-                  <li className="nav-item dropdown-language dropdown me-2 me-xl-0">
-                    <a
-                      className="nav-link dropdown-toggle hide-arrow"
-                      href="javascript:void(0);"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="bx bx-globe bx-md" />
-                    </a>
-                    <ul className="dropdown-menu dropdown-menu-end">
-                      <li>
-                        <a
-                          className="dropdown-item active"
-                          href="javascript:void(0);"
-                          data-language="en"
-                          data-text-direction="ltr"
-                        >
-                          <span>English</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="javascript:void(0);"
-                          data-language="fr"
-                          data-text-direction="ltr"
-                        >
-                          <span>French</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="javascript:void(0);"
-                          data-language="ar"
-                          data-text-direction="rtl"
-                        >
-                          <span>Arabic</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="javascript:void(0);"
-                          data-language="de"
-                          data-text-direction="ltr"
-                        >
-                          <span>German</span>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  {/* /Language */}
-                  {/* Style Switcher */}
-                  <li className="nav-item dropdown-style-switcher dropdown me-2 me-xl-0">
-                    <a
-                      className="nav-link dropdown-toggle hide-arrow"
-                      href="javascript:void(0);"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="bx bx-md bx-sun" />
-                    </a>
-                    <ul className="dropdown-menu dropdown-menu-end dropdown-styles">
-                      <li>
-                        <a
-                          className="dropdown-item active"
-                          href="javascript:void(0);"
-                          data-theme="light"
-                        >
-                          <span>
-                            <i className="bx bx-sun bx-md me-3" />
-                            Light
-                          </span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="javascript:void(0);"
-                          data-theme="dark"
-                        >
-                          <span>
-                            <i className="bx bx-moon bx-md me-3" />
-                            Dark
-                          </span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="javascript:void(0);"
-                          data-theme="system"
-                        >
-                          <span>
-                            <i className="bx bx-desktop bx-md me-3" />
-                            System
-                          </span>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  {/* / Style Switcher*/}
-                  {/* Quick links  */}
-                  <li className="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
-                    <a
-                      className="nav-link dropdown-toggle hide-arrow"
-                      href="javascript:void(0);"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="false"
-                    >
-                      <i className="bx bx-grid-alt bx-md" />
-                    </a>
-                    <div className="dropdown-menu dropdown-menu-end p-0">
-                      <div className="dropdown-menu-header border-bottom">
-                        <div className="dropdown-header d-flex align-items-center py-3">
-                          <h6 className="mb-0 me-auto">Shortcuts</h6>
-                          <a
-                            href="javascript:void(0)"
-                            className="dropdown-shortcuts-add py-2"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            aria-label="Add shortcuts"
-                            data-bs-original-title="Add shortcuts"
-                          >
-                            <i className="bx bx-plus-circle text-heading" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="dropdown-shortcuts-list scrollable-container ps">
-                        <div className="row row-bordered overflow-visible g-0">
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-calendar bx-26px text-heading" />
-                            </span>
-                            <a href="app-calendar.html" className="stretched-link">
-                              Calendar
-                            </a>
-                            <small>Appointments</small>
-                          </div>
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-food-menu bx-26px text-heading" />
-                            </span>
-                            <a href="app-invoice-list.html" className="stretched-link">
-                              Invoice App
-                            </a>
-                            <small>Manage Accounts</small>
-                          </div>
-                        </div>
-                        <div className="row row-bordered overflow-visible g-0">
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-user bx-26px text-heading" />
-                            </span>
-                            <a href="app-user-list.html" className="stretched-link">
-                              User App
-                            </a>
-                            <small>Manage Users</small>
-                          </div>
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-check-shield bx-26px text-heading" />
-                            </span>
-                            <a href="app-access-roles.html" className="stretched-link">
-                              Role Management
-                            </a>
-                            <small>Permission</small>
-                          </div>
-                        </div>
-                        <div className="row row-bordered overflow-visible g-0">
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-pie-chart-alt-2 bx-26px text-heading" />
-                            </span>
-                            <a href="index.html" className="stretched-link">
-                              Dashboard
-                            </a>
-                            <small>User Dashboard</small>
-                          </div>
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-cog bx-26px text-heading" />
-                            </span>
-                            <a
-                              href="pages-account-settings-account.html"
-                              className="stretched-link"
-                            >
-                              Setting
-                            </a>
-                            <small>Account Settings</small>
-                          </div>
-                        </div>
-                        <div className="row row-bordered overflow-visible g-0">
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-help-circle bx-26px text-heading" />
-                            </span>
-                            <a href="pages-faq.html" className="stretched-link">
-                              FAQs
-                            </a>
-                            <small>FAQs &amp; Articles</small>
-                          </div>
-                          <div className="dropdown-shortcuts-item col">
-                            <span className="dropdown-shortcuts-icon rounded-circle mb-3">
-                              <i className="bx bx-window-open bx-26px text-heading" />
-                            </span>
-                            <a href="modal-examples.html" className="stretched-link">
-                              Modals
-                            </a>
-                            <small>Useful Popups</small>
-                          </div>
-                        </div>
-                        <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                          <div
-                            className="ps__thumb-x"
-                            tabIndex={0}
-                            style={{ left: 0, width: 0 }}
-                          />
-                        </div>
-                        <div className="ps__rail-y" style={{ top: 0, right: 0 }}>
-                          <div
-                            className="ps__thumb-y"
-                            tabIndex={0}
-                            style={{ top: 0, height: 0 }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                  {/* Quick links */}
-                  {/* Notification */}
-                  <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
-                    <a
-                      className="nav-link dropdown-toggle hide-arrow"
-                      href="javascript:void(0);"
-                      data-bs-toggle="dropdown"
-                      data-bs-auto-close="outside"
-                      aria-expanded="false"
-                    >
-                      <span className="position-relative">
-                        <i className="bx bx-bell bx-md" />
-                        <span className="badge rounded-pill bg-danger badge-dot badge-notifications border" />
-                      </span>
-                    </a>
-                    <ul className="dropdown-menu dropdown-menu-end p-0">
-                      <li className="dropdown-menu-header border-bottom">
-                        <div className="dropdown-header d-flex align-items-center py-3">
-                          <h6 className="mb-0 me-auto">Notification</h6>
-                          <div className="d-flex align-items-center h6 mb-0">
-                            <span className="badge bg-label-primary me-2">8 New</span>
-                            <a
-                              href="javascript:void(0)"
-                              className="dropdown-notifications-all p-2"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
-                              aria-label="Mark all as read"
-                              data-bs-original-title="Mark all as read"
-                            >
-                              <i className="bx bx-envelope-open text-heading" />
-                            </a>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="dropdown-notifications-list scrollable-container ps">
-                        <ul className="list-group list-group-flush">
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <img
-                                    src="../../assets/img/avatars/1.png"
-                                    alt=""
-                                    className="rounded-circle"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">Congratulation Lettie 🎉</h6>
-                                <small className="mb-1 d-block text-body">
-                                  Won the monthly best seller gold badge
-                                </small>
-                                <small className="text-muted">1h ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <span className="avatar-initial rounded-circle bg-label-danger">
-                                    CF
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">Charles Franklin</h6>
-                                <small className="mb-1 d-block text-body">
-                                  Accepted your connection
-                                </small>
-                                <small className="text-muted">12hr ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <img
-                                    src="../../assets/img/avatars/2.png"
-                                    alt=""
-                                    className="rounded-circle"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">New Message ✉️</h6>
-                                <small className="mb-1 d-block text-body">
-                                  You have new message from Natalie
-                                </small>
-                                <small className="text-muted">1h ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <span className="avatar-initial rounded-circle bg-label-success">
-                                    <i className="bx bx-cart" />
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">
-                                  Whoo! You have new order 🛒{" "}
-                                </h6>
-                                <small className="mb-1 d-block text-body">
-                                  ACME Inc. made new order $1,154
-                                </small>
-                                <small className="text-muted">1 day ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <img
-                                    src="../../assets/img/avatars/9.png"
-                                    alt=""
-                                    className="rounded-circle"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">
-                                  Application has been approved 🚀{" "}
-                                </h6>
-                                <small className="mb-1 d-block text-body">
-                                  Your ABC project application has been approved.
-                                </small>
-                                <small className="text-muted">2 days ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <span className="avatar-initial rounded-circle bg-label-success">
-                                    <i className="bx bx-pie-chart-alt" />
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">
-                                  Monthly report is generated
-                                </h6>
-                                <small className="mb-1 d-block text-body">
-                                  July monthly financial report is generated{" "}
-                                </small>
-                                <small className="text-muted">3 days ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <img
-                                    src="../../assets/img/avatars/5.png"
-                                    alt=""
-                                    className="rounded-circle"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">Send connection request</h6>
-                                <small className="mb-1 d-block text-body">
-                                  Peter sent you connection request
-                                </small>
-                                <small className="text-muted">4 days ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <img
-                                    src="../../assets/img/avatars/6.png"
-                                    alt=""
-                                    className="rounded-circle"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">New message from Jane</h6>
-                                <small className="mb-1 d-block text-body">
-                                  Your have new message from Jane
-                                </small>
-                                <small className="text-muted">5 days ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                          <li className="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-                            <div className="d-flex">
-                              <div className="flex-shrink-0 me-3">
-                                <div className="avatar">
-                                  <span className="avatar-initial rounded-circle bg-label-warning">
-                                    <i className="bx bx-error" />
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex-grow-1">
-                                <h6 className="small mb-0">CPU is running high</h6>
-                                <small className="mb-1 d-block text-body">
-                                  CPU Utilization Percent is currently at 88.63%,
-                                </small>
-                                <small className="text-muted">5 days ago</small>
-                              </div>
-                              <div className="flex-shrink-0 dropdown-notifications-actions">
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-read"
-                                >
-                                  <span className="badge badge-dot" />
-                                </a>
-                                <a
-                                  href="javascript:void(0)"
-                                  className="dropdown-notifications-archive"
-                                >
-                                  <span className="bx bx-x" />
-                                </a>
-                              </div>
-                            </div>
-                          </li>
-                        </ul>
-                        <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                          <div
-                            className="ps__thumb-x"
-                            tabIndex={0}
-                            style={{ left: 0, width: 0 }}
-                          />
-                        </div>
-                        <div className="ps__rail-y" style={{ top: 0, right: 0 }}>
-                          <div
-                            className="ps__thumb-y"
-                            tabIndex={0}
-                            style={{ top: 0, height: 0 }}
-                          />
-                        </div>
-                      </li>
-                      <li className="border-top">
-                        <div className="d-grid p-4">
-                          <a
-                            className="btn btn-primary btn-sm d-flex"
-                            href="javascript:void(0);"
-                          >
-                            <small className="align-middle">View all notifications</small>
-                          </a>
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                  {/*/ Notification */}
-                  {/* User */}
-                  <li className="nav-item navbar-dropdown dropdown-user dropdown">
-                    <a
-                      className="nav-link dropdown-toggle hide-arrow p-0"
-                      href="javascript:void(0);"
-                      data-bs-toggle="dropdown"
-                    >
-                      <div className="avatar avatar-online">
-                        <img
-                          src="../../assets/img/avatars/1.png"
-                          alt=""
-                          className="w-px-40 h-auto rounded-circle"
-                        />
-                      </div>
-                    </a>
-                    <ul className="dropdown-menu dropdown-menu-end">
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="pages-account-settings-account.html"
-                        >
-                          <div className="d-flex">
-                            <div className="flex-shrink-0 me-3">
-                              <div className="avatar avatar-online">
-                                <img
-                                  src="../../assets/img/avatars/1.png"
-                                  alt=""
-                                  className="w-px-40 h-auto rounded-circle"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex-grow-1">
-                              <h6 className="mb-0">John Doe</h6>
-                              <small className="text-muted">Admin</small>
-                            </div>
-                          </div>
-                        </a>
-                      </li>
-                      <li>
-                        <div className="dropdown-divider my-1" />
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="pages-profile-user.html">
-                          <i className="bx bx-user bx-md me-3" />
-                          <span>My Profile</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="pages-account-settings-account.html"
-                        >
-                          <i className="bx bx-cog bx-md me-3" />
-                          <span>Settings</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="pages-account-settings-billing.html"
-                        >
-                          <span className="d-flex align-items-center align-middle">
-                            <i className="flex-shrink-0 bx bx-credit-card bx-md me-3" />
-                            <span className="flex-grow-1 align-middle">Billing Plan</span>
-                            <span className="flex-shrink-0 badge rounded-pill bg-danger">
-                              4
-                            </span>
-                          </span>
-                        </a>
-                      </li>
-                      <li>
-                        <div className="dropdown-divider my-1" />
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="pages-pricing.html">
-                          <i className="bx bx-dollar bx-md me-3" />
-                          <span>Pricing</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a className="dropdown-item" href="pages-faq.html">
-                          <i className="bx bx-help-circle bx-md me-3" />
-                          <span>FAQ</span>
-                        </a>
-                      </li>
-                      <li>
-                        <div className="dropdown-divider my-1" />
-                      </li>
-                      <li>
-                        <a
-                          className="dropdown-item"
-                          href="auth-login-cover.html"
-                          target="_blank"
-                        >
-                          <i className="bx bx-power-off bx-md me-3" />
-                          <span>Log Out</span>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  {/*/ User */}
-                </ul>
-              </div>
+
               {/* Search Small Screens */}
               <div className="navbar-search-wrapper search-input-wrapper d-none">
                 <span
@@ -1260,80 +530,82 @@ const Product = () => {
               <div className="container-xxl flex-grow-1 container-p-y">
                 {/* Product List Widget */}
                 <div className="card mb-6">
-                  <div className="card-widget-separator-wrapper">
-                    <div className="card-body card-widget-separator">
-                      <div className="row gy-4 gy-sm-1">
-                        <div className="col-sm-6 col-lg-3">
-                          <div className="d-flex justify-content-between align-items-start card-widget-1 border-end pb-4 pb-sm-0">
-                            <div>
-                              <p className="mb-1">In-store Sales</p>
-                              <h4 className="mb-1">$5,345.43</h4>
-                              <p className="mb-0">
-                                <span className="me-2">5k orders</span>
-                                <span className="badge bg-label-success">+5.7%</span>
-                              </p>
-                            </div>
-                            <span className="avatar me-sm-6">
-                              <span className="avatar-initial rounded w-px-44 h-px-44">
-                                <i className="bx bx-store-alt bx-lg text-heading" />
-                              </span>
-                            </span>
-                          </div>
-                          <hr className="d-none d-sm-block d-lg-none me-6" />
-                        </div>
-                        <div className="col-sm-6 col-lg-3">
-                          <div className="d-flex justify-content-between align-items-start card-widget-2 border-end pb-4 pb-sm-0">
-                            <div>
-                              <p className="mb-1">Website Sales</p>
-                              <h4 className="mb-1">$674,347.12</h4>
-                              <p className="mb-0">
-                                <span className="me-2">21k orders</span>
-                                <span className="badge bg-label-success">+12.4%</span>
-                              </p>
-                            </div>
-                            <span className="avatar p-2 me-lg-6">
-                              <span className="avatar-initial rounded w-px-44 h-px-44">
-                                <i className="bx bx-laptop bx-lg text-heading" />
-                              </span>
-                            </span>
-                          </div>
-                          <hr className="d-none d-sm-block d-lg-none" />
-                        </div>
-                        <div className="col-sm-6 col-lg-3">
-                          <div className="d-flex justify-content-between align-items-start border-end pb-4 pb-sm-0 card-widget-3">
-                            <div>
-                              <p className="mb-1">Discount</p>
-                              <h4 className="mb-1">$14,235.12</h4>
-                              <p className="mb-0">6k orders</p>
-                            </div>
-                            <span className="avatar p-2 me-sm-6">
-                              <span className="avatar-initial rounded w-px-44 h-px-44">
-                                <i className="bx bx-gift bx-lg text-heading" />
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="col-sm-6 col-lg-3">
-                          <div className="d-flex justify-content-between align-items-start">
-                            <div>
-                              <p className="mb-1">Affiliate</p>
-                              <h4 className="mb-1">$8,345.23</h4>
-                              <p className="mb-0">
-                                <span className="me-2">150 orders</span>
-                                <span className="badge bg-label-danger">-3.5%</span>
-                              </p>
-                            </div>
-                            <span className="avatar p-2">
-                              <span className="avatar-initial rounded w-px-44 h-px-44">
-                                <i className="bx bx-wallet bx-lg text-heading" />
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+      <div className="card-widget-separator-wrapper">
+        <div className="card-body card-widget-separator">
+          <div className="row gy-4 gy-sm-1">
+            {/* All Products */}
+            <div className="col-sm-6 col-lg-3">
+              <div className="d-flex justify-content-between align-items-start card-widget-1 border-end pb-4 pb-sm-0">
+                <div>
+                  <p className="mb-1">All Product</p>
+                  <h4 className="mb-1">{allProductsCount}</h4>
+                  <p className="mb-0">
+                    <span className="me-2">Total Products</span>
+                  </p>
                 </div>
+                <span className="avatar me-sm-6">
+                  <span className="avatar-initial rounded w-px-44 h-px-44">
+                    <i className="bx bx-store-alt bx-lg text-heading" />
+                  </span>
+                </span>
+              </div>
+            </div>
+            
+            {/* All Brands */}
+            <div className="col-sm-6 col-lg-3">
+              <div className="d-flex justify-content-between align-items-start card-widget-2 border-end pb-4 pb-sm-0">
+                <div>
+                  <p className="mb-1">All Brand</p>
+                  <h4 className="mb-1">{allBrandsCount}</h4>
+                  <p className="mb-0">
+                    <span className="me-2">Total Brands</span>
+                  </p>
+                </div>
+                <span className="avatar p-2 me-lg-6">
+                  <span className="avatar-initial rounded w-px-44 h-px-44">
+                    <i className="bx bx-laptop bx-lg text-heading" />
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {/* All Product Variants */}
+            <div className="col-sm-6 col-lg-3">
+              <div className="d-flex justify-content-between align-items-start border-end pb-4 pb-sm-0 card-widget-3">
+                <div>
+                  <p className="mb-1">All ProductVariant</p>
+                  <h4 className="mb-1">{allProductVariantsCount}</h4>
+                  <p className="mb-0">Total Variants</p>
+                </div>
+                <span className="avatar p-2 me-sm-6">
+                  <span className="avatar-initial rounded w-px-44 h-px-44">
+                    <i className="bx bx-gift bx-lg text-heading" />
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {/* Total Price */}
+            <div className="col-sm-6 col-lg-3">
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <p className="mb-1">Total Price</p>
+                  <h4 className="mb-1">${totalPrice.toFixed(2)}</h4>
+                  <p className="mb-0">
+                    <span className="me-2">Overall Value</span>
+                  </p>
+                </div>
+                <span className="avatar p-2">
+                  <span className="avatar-initial rounded w-px-44 h-px-44">
+                    <i className="bx bx-wallet bx-lg text-heading" />
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
                 {/* Product List Table */}
                 <div className="card">
 
@@ -1351,13 +623,13 @@ const Product = () => {
                                 className="form-control"
                                 placeholder="Search Product"
                                 aria-controls="DataTables_Table_0"
-                               
+
                               />
                             </label>
                           </div>
-      
+
                         </div>
-                        
+
 
                       </div>
                       <table

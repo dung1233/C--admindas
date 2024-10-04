@@ -184,58 +184,7 @@ const Oderlist = () => {
 
                     {/* Menu Inner */}
                     <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-                        <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
-                            <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
-                                <i className="menu-icon tf-icons bx bx-home-smile"></i>
-                                <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
-                                <span className="badge rounded-pill bg-danger ms-auto">5</span>
-                            </a>
-                            <ul className="menu-sub">
-                                <li className="menu-item">
-                                    <a href="index.html" className="menu-link">
-                                        <div className="text-truncate" data-i18n="Analytics">Analytics</div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
-                                        <div className="text-truncate" data-i18n="CRM">CRM</div>
-                                    </a>
-                                </li>
-                                <li className="menu-item active">
-                                    <a
-                                        href="/Commerce"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="eCommerce">
-                                            eCommerce
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a
-                                        href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="Logistics">
-                                            Logistics
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a
-                                        href="app-academy-dashboard.html"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="Academy">
-                                            Academy
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
+                        
 
                         <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
                             <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -246,7 +195,7 @@ const Oderlist = () => {
                             </a>
                             <ul className="menu-sub">
                                 <li className="menu-item">
-                                    <a href="app-ecommerce-dashboard.html" className="menu-link">
+                                    <a href="/" className="menu-link">
                                         <div className="text-truncate" data-i18n="Dashboard">
                                             Dashboard
                                         </div>
@@ -280,6 +229,13 @@ const Oderlist = () => {
                                                 </div>
                                             </a>
                                         </li>
+                                        <li className="menu-item ">
+                                            <a href="/Brandlist" className="menu-link">
+                                                <div className="text-truncate" data-i18n="Category List">
+                                                    Brand List
+                                                </div>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                                 <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -308,126 +264,7 @@ const Oderlist = () => {
 
                                 </li>
 
-                                <li className={`menu-item ${menuState.Customer ? 'open' : ''}`}>
-                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Customer'); }}>
-                                        <div className="text-truncate" data-i18n="Customer">
-                                            Customer
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item">
-                                            <a href="/Customer" className="menu-link">
-                                                <div className="text-truncate" data-i18n="All Customers">
-                                                    All Customers
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="javascript:void(0);" className="menu-link menu-toggle">
-                                                <div className="text-truncate" data-i18n="Customer Details">
-                                                    Customer Details
-                                                </div>
-                                            </a>
-                                            <ul className="menu-sub">
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-overview.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Overview">
-                                                            Overview
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-security.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Security">
-                                                            Security
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-billing.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Address & Billing">
-                                                            Address &amp; Billing
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li className="menu-item">
-                                                    <a
-                                                        href="app-ecommerce-customer-details-notifications.html"
-                                                        className="menu-link"
-                                                    >
-                                                        <div className="text-truncate" data-i18n="Notifications">
-                                                            Notifications
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-item">
-                                    <a href="javascript:void(0);" className="menu-link menu-toggle">
-                                        <div className="text-truncate" data-i18n="Settings">
-                                            Settings
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-detail.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Store Details">
-                                                    Store Details
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-payments.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Payments">
-                                                    Payments
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-checkout.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Checkout">
-                                                    Checkout
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-shipping.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Shipping & Delivery">
-                                                    Shipping &amp; Delivery
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="app-ecommerce-settings-locations.html" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Locations">
-                                                    Locations
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a
-                                                href="app-ecommerce-settings-notifications.html"
-                                                className="menu-link"
-                                            >
-                                                <div className="text-truncate" data-i18n="Notifications">
-                                                    Notifications
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
+                                
                             </ul>
                         </li>
 
@@ -453,79 +290,7 @@ const Oderlist = () => {
                             </a>
                         </div>
 
-                        <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-                            {/* Search */}
-                            <div className="navbar-nav align-items-center">
-                                <div className="nav-item d-flex align-items-center">
-                                    <i className="bx bx-search bx-md"></i>
-                                    <input type="text" className="form-control border-0 shadow-none ps-1 ps-sm-2" placeholder="Search..." aria-label="Search..." />
-                                </div>
-                            </div>
-                            {/* /Search */}
-
-                            <ul className="navbar-nav flex-row align-items-center ms-auto">
-                                {/* Placeholder */}
-                                <li className="nav-item lh-1 me-4">
-                                    <span></span>
-                                </li>
-
-                                {/* User */}
-                                <li className="nav-item navbar-dropdown dropdown-user dropdown">
-                                    <a className="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                        <div className="avatar avatar-online">
-                                            <img src="../assets/img/avatars/1.png" alt="" className="w-px-40 h-auto rounded-circle" />
-                                        </div>
-                                    </a>
-                                    <ul className="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a className="dropdown-item" href="#">
-                                                <div className="d-flex">
-                                                    <div className="flex-shrink-0 me-3">
-                                                        <div className="avatar avatar-online">
-                                                            <img src="../assets/img/avatars/1.png" alt="" className="w-px-40 h-auto rounded-circle" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-grow-1">
-                                                        <h6 className="mb-0">John Doe</h6>
-                                                        <small className="text-muted">Admin</small>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <div className="dropdown-divider my-1"></div>
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="#">
-                                                <i className="bx bx-user bx-md me-3"></i><span>My Profile</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="#">
-                                                <i className="bx bx-cog bx-md me-3"></i><span>Settings</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="#">
-                                                <span className="d-flex align-items-center align-middle">
-                                                    <i className="flex-shrink-0 bx bx-credit-card bx-md me-3"></i><span className="flex-grow-1 align-middle">Billing Plan</span>
-                                                    <span className="flex-shrink-0 badge rounded-pill bg-danger">4</span>
-                                                </span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <div className="dropdown-divider my-1"></div>
-                                        </li>
-                                        <li>
-                                            <a className="dropdown-item" href="javascript:void(0);">
-                                                <i className="bx bx-power-off bx-md me-3"></i><span>Log Out</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                {/* /User */}
-                            </ul>
-                        </div>
+                        
                     </nav>
                     {/* / Navbar */}
                     {/* Content wrapper */}

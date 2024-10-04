@@ -2,8 +2,9 @@ import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const Catenorylist = () => {
+const Brandlist = () => {
     const menuRef = useRef(null);
+    const [brands, setBrands] = useState([]);
     const [menuState, setMenuState] = useState(() => {
         // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
         const savedMenuState = localStorage.getItem('menuState');
@@ -21,7 +22,7 @@ const Catenorylist = () => {
     // Gọi API để lấy dữ liệu danh mục
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Category');
+            const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Brand');
             // Lưu dữ liệu `response.data` vào state `categories`
             setCategories(response.data);
             console.log('API response:', response.data);
@@ -32,6 +33,24 @@ const Catenorylist = () => {
             }
         } catch (error) {
             console.error('Error fetching categories:', error.response?.data || error.message);
+        }
+    };
+
+    const handleDeleteBrand = async (brandId) => {
+        try {
+            const response = await axios.delete(`https://projectky320240926105522.azurewebsites.net/api/Brand/${brandId}`);
+            if (response.status === 200 || response.status === 204) {
+                alert('Brand deleted successfully!');
+
+                // Lọc lại danh sách brands, loại bỏ brand vừa xóa
+                setBrands((prevBrands) => prevBrands.filter((brand) => brand.id !== brandId));
+            } else {
+                console.error('Unexpected response:', response);
+                alert('Failed to delete brand.');
+            }
+        } catch (error) {
+            console.error('Error deleting brand:', error.response?.data || error.message);
+            alert('Failed to delete brand.');
         }
     };
 
@@ -207,14 +226,14 @@ const Catenorylist = () => {
                                                 </div>
                                             </a>
                                         </li>
-                                        <li className="menu-item active">
+                                        <li className="menu-item ">
                                             <a href="/Catenorylist" className="menu-link">
                                                 <div className="text-truncate" data-i18n="Category List">
                                                     Category List
                                                 </div>
                                             </a>
                                         </li>
-                                        <li className="menu-item ">
+                                        <li className="menu-item active">
                                             <a href="/Brandlist" className="menu-link">
                                                 <div className="text-truncate" data-i18n="Category List">
                                                     Brand List
@@ -246,7 +265,7 @@ const Catenorylist = () => {
                                         </li>
                                     </ul>
                                 </li>
-                               
+
                             </ul>
                         </li>
 
@@ -274,7 +293,7 @@ const Catenorylist = () => {
                                 <i className="bx bx-menu bx-md" />
                             </a>
                         </div>
-                        
+                       
                         {/* Search Small Screens */}
                         <div className="navbar-search-wrapper search-input-wrapper d-none">
                             <span
@@ -355,32 +374,16 @@ const Catenorylist = () => {
                                             <div className="card-header d-flex flex-wrap py-0 flex-column flex-sm-row">
                                                 <div>
                                                     <div id="DataTables_Table_0_filter" className="dataTables_filter me-3 mb-sm-6 mb-0 ps-0">
-                                                        <label>
-                                                            <input type="search" className="form-control ms-0" placeholder="Search Category" aria-controls="DataTables_Table_0" />
-                                                        </label>
+
                                                     </div>
                                                 </div>
                                                 <div className="d-flex justify-content-center justify-content-md-end align-items-baseline">
                                                     <div className="dt-action-buttons d-flex justify-content-center flex-md-row align-items-baseline pt-0">
                                                         <div className="dataTables_length" id="DataTables_Table_0_length">
-                                                            <label>
-                                                                <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" className="form-select ms-0">
-                                                                    <option value="7">7</option>
-                                                                    <option value="10">10</option>
-                                                                    <option value="20">20</option>
-                                                                    <option value="50">50</option>
-                                                                    <option value="70">70</option>
-                                                                    <option value="100">100</option>
-                                                                </select>
-                                                            </label>
+
                                                         </div>
                                                         <div className="dt-buttons btn-group flex-wrap">
-                                                            <button className="btn btn-secondary add-new btn-primary ms-2" tabIndex="0" aria-controls="DataTables_Table_0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasEcommerceCategoryList">
-                                                                <span>
-                                                                    <i className="bx bx-plus bx-sm me-0 me-sm-2"></i>
-                                                                    <span className="d-none d-sm-inline-block">Add Category</span>
-                                                                </span>
-                                                            </button>
+
                                                         </div>
                                                     </div>
                                                 </div>
@@ -399,7 +402,7 @@ const Catenorylist = () => {
                                                             Slug&nbsp;
                                                         </th>
                                                         <th className="text-nowrap text-sm-end sorting_disabled" rowSpan="1" colSpan="1" aria-label="Total Earning" style={{ width: '130px' }}>
-                                                        Description
+                                                            Description
                                                         </th>
                                                         <th className="text-lg-center sorting_disabled" rowspan="1" colspan="1" style={{ width: '127px' }} aria-label="Actions">Actions</th>
 
@@ -407,7 +410,7 @@ const Catenorylist = () => {
                                                 </thead>
                                                 <tbody>
                                                     {categories.map((category, index) => (
-                                                        <tr key={category.categoryId} className={index % 2 === 0 ? 'even' : 'odd'}>
+                                                        <tr key={category.brandId} className={index % 2 === 0 ? 'even' : 'odd'}>
                                                             <td className="control" tabIndex="0" style={{ display: 'none' }}></td>
                                                             <td className="dt-checkboxes-cell">
                                                                 <input type="checkbox" className="dt-checkboxes form-check-input" />
@@ -417,6 +420,11 @@ const Catenorylist = () => {
                                                                     <div className="avatar-wrapper me-3 rounded-2 bg-label-secondary">
                                                                         <div className="avatar">
                                                                             {/* Nếu bạn có hình ảnh cho category thì thay đổi src bên dưới */}
+                                                                            <img
+                                                                                src={category.image}
+                                                                                alt=""
+                                                                                className="rounded-circle"
+                                                                            />
 
                                                                         </div>
                                                                     </div>
@@ -443,8 +451,10 @@ const Catenorylist = () => {
                                                                         <i className="bx bx-dots-vertical-rounded bx-md"></i>
                                                                     </button>
                                                                     <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                    <Link to={{ pathname: "/Addvariant" }} className="dropdown-item">View</Link>
-                                                                        <a href="javascript:0;" className="dropdown-item">Suspend</a>
+                                                                        <Link to={{ pathname: "/Addvariant" }} className="dropdown-item">View</Link>
+                                                                        <a className="dropdown-item" onClick={() => handleDeleteBrand(category.brandId)} style={{ cursor: 'pointer' }}>
+                                                                            Xóa
+                                                                        </a>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -1009,4 +1019,4 @@ const Catenorylist = () => {
     )
 }
 
-export default Catenorylist
+export default Brandlist

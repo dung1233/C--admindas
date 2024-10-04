@@ -5,6 +5,8 @@ import axios from "axios";
 const UserAc = () => {
     const { userId } = useParams();
     const [user, setUser] = useState({});
+    const [orders, setOrders] = useState([]);
+    const [orderDetails, setOrderDetails] = useState([]);
     const [formData, setFormData] = useState({});
 
     // Fetch user details
@@ -13,18 +15,58 @@ const UserAc = () => {
         try {
             const response = await axios.get(url);
             setUser(response.data);
-
             setFormData({
                 ...response.data,
                 dateOfBirth: response.data.dateOfBirth ? formatDate(response.data.dateOfBirth) : '',
             });
         } catch (error) {
-            console.log(error);
+            console.log('Error fetching user details:', error);
+        }
+    };
+
+    // Fetch user's orders
+    const fetchUserOrders = async () => {
+        try {
+            const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Order');
+            const userOrders = response.data.filter(order => order.userId === parseInt(userId));
+            setOrders(userOrders);
+
+            // Fetch order item details for each order
+            const orderDetailsPromises = userOrders.map(async (order) => {
+                const productVariantDetails = await fetchProductVariants(order.orderItems);
+                return {
+                    ...order,
+                    orderItems: productVariantDetails,
+                };
+            });
+
+            const detailedOrders = await Promise.all(orderDetailsPromises);
+            setOrderDetails(detailedOrders);
+        } catch (error) {
+            console.log('Error fetching user orders:', error);
+        }
+    };
+
+    // Fetch product variants
+    const fetchProductVariants = async (orderItems) => {
+        try {
+            const variantPromises = orderItems.map(async (item) => {
+                const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/ProductVariant/${item.variantId}`);
+                return {
+                    ...item,
+                    productVariant: response.data,
+                };
+            });
+            return await Promise.all(variantPromises);
+        } catch (error) {
+            console.log('Error fetching product variant details:', error);
+            return [];
         }
     };
 
     useEffect(() => {
         _getDetail();
+        fetchUserOrders();
     }, []);
 
     // Format date to YYYY-MM-DD (check for invalid date)
@@ -59,7 +101,7 @@ const UserAc = () => {
                         console.log(`${key}: ${error.response.data.errors[key].join(', ')}`);
                     });
                 }
-                
+
                 alert(`Error: ${error.response.status} - ${error.response.data.title || 'Bad Request'}`);
             } else if (error.request) {
                 console.log('Error Request:', error.request);
@@ -81,7 +123,7 @@ const UserAc = () => {
         order: false,
         Customer: false,
         Settings: false,
-        View:false
+        View: false
     });
 
 
@@ -462,21 +504,21 @@ const UserAc = () => {
                                             </a>
                                         </li>
 
-                                        <li className={`menu-item ${menuState.View? 'open' : ''}`}>
+                                        <li className={`menu-item ${menuState.View ? 'open' : ''}`}>
                                             <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('View'); }}>
-                                                    <div class="text-truncate" data-i18n="View">View</div>
-                                                </a>
-                                                <ul class="menu-sub">
-                                                    <li class="menu-item active open ">
-                                                        <a href="/UserAc" class="menu-link">
-                                                            <div class="text-truncate" data-i18n="Account">Account</div>
-                                                        </a>
-                                                    </li>
-                                                    <li class="menu-item">
-                                                        <a href="/Invoice" class="menu-link">
-                                                            <div class="text-truncate" data-i18n="Security">Invoice</div>
-                                                        </a>
-                                                    </li>
+                                                <div class="text-truncate" data-i18n="View">View</div>
+                                            </a>
+                                            <ul class="menu-sub">
+                                                <li class="menu-item active open ">
+                                                    <a href="/UserAc" class="menu-link">
+                                                        <div class="text-truncate" data-i18n="Account">Account</div>
+                                                    </a>
+                                                </li>
+                                                <li class="menu-item">
+                                                    <a href="/Invoice" class="menu-link">
+                                                        <div class="text-truncate" data-i18n="Security">Invoice</div>
+                                                    </a>
+                                                </li>
                                                 {/* <li class="menu-item">
                                                     <a href="app-user-view-billing.html" class="menu-link">
                                                         <div class="text-truncate" data-i18n="Billing &amp; Plans">Billing &amp; Plans</div>
@@ -1320,7 +1362,7 @@ const UserAc = () => {
                                     {/* User Sidebar */}
                                     <div className="col-xl-4 col-lg-5 order-1 order-md-0">
                                         {/* User Card */}
-                                        
+
                                         <div className="card mb-6">
                                             <div className="card-body pt-12">
                                                 <div className="user-avatar-section">
@@ -1365,7 +1407,7 @@ const UserAc = () => {
                                                 <h5 className="pb-4 border-bottom mb-4">Details</h5>
                                                 <div className="info-container">
                                                     <ul className="list-unstyled mb-6">
-                                                    <li className="mb-2">
+                                                        <li className="mb-2">
                                                             <span className="h6">BirthDay:</span>
                                                             <span>{user.dateOfBirth}</span>
                                                         </li>
@@ -1593,7 +1635,7 @@ const UserAc = () => {
                                                                     data-col={1}
                                                                     aria-label=""
                                                                 >
-                                                                    <input type="checkbox" className="form-check-input" />
+                                                                    ID
                                                                 </th>
                                                                 <th
                                                                     className="sorting sorting_desc"
@@ -1601,11 +1643,11 @@ const UserAc = () => {
                                                                     aria-controls="DataTables_Table_0"
                                                                     rowSpan={1}
                                                                     colSpan={1}
-                                                                    style={{ width: 209 }}
+                                                                    style={{ width: 109 }}
                                                                     aria-label="Project: activate to sort column ascending"
                                                                     aria-sort="descending"
                                                                 >
-                                                                    Project
+                                                                   Status
                                                                 </th>
                                                                 <th
                                                                     className="sorting"
@@ -1616,7 +1658,7 @@ const UserAc = () => {
                                                                     style={{ width: 82 }}
                                                                     aria-label="Leader: activate to sort column ascending"
                                                                 >
-                                                                    Leader
+                                                                   Price
                                                                 </th>
                                                                 <th
                                                                     className="sorting_disabled"
@@ -1625,7 +1667,7 @@ const UserAc = () => {
                                                                     style={{ width: 85 }}
                                                                     aria-label="Team"
                                                                 >
-                                                                    Team
+                                                                    Date
                                                                 </th>
                                                                 <th
                                                                     className="w-px-200 sorting"
@@ -1633,12 +1675,12 @@ const UserAc = () => {
                                                                     aria-controls="DataTables_Table_0"
                                                                     rowSpan={1}
                                                                     colSpan={1}
-                                                                    style={{ width: 200 }}
+                                                                    style={{ width: 250 }}
                                                                     aria-label="Progress: activate to sort column ascending"
                                                                 >
-                                                                    Progress
+                                                                    Note
                                                                 </th>
-                                                                <th
+                                                                {/* <th
                                                                     className="sorting_disabled"
                                                                     rowSpan={1}
                                                                     colSpan={1}
@@ -1646,952 +1688,31 @@ const UserAc = () => {
                                                                     aria-label="Action"
                                                                 >
                                                                     Action
-                                                                </th>
+                                                                </th> */}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <span className="avatar-initial rounded-circle bg-label-danger">
-                                                                                    WS
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Website SEO
-                                                                            </span>
-                                                                            <small className="text-truncate">10 May 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Eileen</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/10.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/3.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/2.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="4 more"
-                                                                                >
-                                                                                    +4
-                                                                                </span>
-                                                                            </li>
+                                                            {orderDetails.map(order => (
+                                                                <tr key={order.orderId}>
+                                                                    <td>{order.orderId}</td>
+                                                                    <td>{order.status}</td>
+                                                                    <td>${order.totalAmount}</td>
+                                                                    <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                                                                    <td>
+                                                                        <ul>
+                                                                            {order.orderItems.map(item => (
+                                                                                <li key={item.variantId}>
+                                                                                   Name: {item.productVariant.product.name} <br />
+                                                                                    Quantity: {item.quantity} <br />
+                                                                                    Color:{item.productVariant.color.colorName} <br />
+                                                                                    Size:{item.productVariant.size.sizeName}
+                                                                                </li>
+                                                                            ))}
                                                                         </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "38%" }}
-                                                                                aria-valuenow="38%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">38%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/social-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Social Banners
-                                                                            </span>
-                                                                            <small className="text-truncate">03 Jan 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Owen</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/11.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/10.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/7.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="2 more"
-                                                                                >
-                                                                                    +2
-                                                                                </span>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "45%" }}
-                                                                                aria-valuenow="45%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">45%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/sketch-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Logo Designs
-                                                                            </span>
-                                                                            <small className="text-truncate">12 Aug 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Keith</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/5.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/7.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/12.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="1 more"
-                                                                                >
-                                                                                    +1
-                                                                                </span>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "92%" }}
-                                                                                aria-valuenow="92%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">92%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/sketch-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                IOS App Design
-                                                                            </span>
-                                                                            <small className="text-truncate">19 Apr 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Merline</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/2.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/8.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/5.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="1 more"
-                                                                                >
-                                                                                    +1
-                                                                                </span>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "56%" }}
-                                                                                aria-valuenow="56%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">56%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/figma-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Figma Dashboards
-                                                                            </span>
-                                                                            <small className="text-truncate">08 Apr 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Harmonia</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/9.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/2.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/4.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "25%" }}
-                                                                                aria-valuenow="25%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">25%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/html-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Crypto Admin
-                                                                            </span>
-                                                                            <small className="text-truncate">
-                                                                                29 Sept 2021
-                                                                            </small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Allyson</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/7.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/3.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/7.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="1 more"
-                                                                                >
-                                                                                    +1
-                                                                                </span>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "36%" }}
-                                                                                aria-valuenow="36%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">36%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="  dt-checkboxes-cell">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="dt-checkboxes form-check-input"
-                                                                    />
-                                                                </td>
-                                                                <td className="sorting_1">
-                                                                    <div className="d-flex justify-content-left align-items-center">
-                                                                        <div className="avatar-wrapper">
-                                                                            <div className="avatar avatar-sm me-3">
-                                                                                <img
-                                                                                    src="../../assets/img/icons/brands/react-label.png"
-                                                                                    alt="Avatar"
-                                                                                    className="rounded-circle"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="d-flex flex-column gap-50">
-                                                                            <span className="text-truncate fw-medium text-heading">
-                                                                                Create Website
-                                                                            </span>
-                                                                            <small className="text-truncate">20 Mar 2021</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-heading">Georgie</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <ul className="list-unstyled d-flex align-items-center avatar-group mb-0 z-2">
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/2.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/6.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li
-                                                                                data-bs-toggle="tooltip"
-                                                                                data-popup="tooltip-custom"
-                                                                                data-bs-placement="top"
-                                                                                className="avatar avatar-xs pull-up"
-                                                                                aria-label="Kim Karlos"
-                                                                                data-bs-original-title="Kim Karlos"
-                                                                            >
-                                                                                <img
-                                                                                    className="rounded-circle"
-                                                                                    src="../../assets/img/avatars/5.png"
-                                                                                    alt="Avatar"
-                                                                                />
-                                                                            </li>
-                                                                            <li className="avatar avatar-xs">
-                                                                                <span
-                                                                                    className="avatar-initial rounded-circle pull-up text-heading"
-                                                                                    data-bs-toggle="tooltip"
-                                                                                    data-bs-placement="top"
-                                                                                    data-bs-original-title="3 more"
-                                                                                >
-                                                                                    +3
-                                                                                </span>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div
-                                                                            className="progress w-100 me-3"
-                                                                            style={{ height: 6 }}
-                                                                        >
-                                                                            <div
-                                                                                className="progress-bar"
-                                                                                style={{ width: "72%" }}
-                                                                                aria-valuenow="72%"
-                                                                                aria-valuemin={0}
-                                                                                aria-valuemax={100}
-                                                                            />
-                                                                        </div>
-                                                                        <span className="text-heading">72%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="d-inline-block">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                            data-bs-toggle="dropdown"
-                                                                        >
-                                                                            <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                        </a>
-                                                                        <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Details
-                                                                            </a>
-                                                                            <a href="javascript:;" className="dropdown-item">
-                                                                                Archive
-                                                                            </a>
-                                                                            <div className="dropdown-divider" />
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="dropdown-item text-danger delete-record"
-                                                                            >
-                                                                                Delete
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+
                                                         </tbody>
                                                     </table>
                                                     <div className="d-flex justify-content-between mx-6 row">
@@ -2605,70 +1726,7 @@ const UserAc = () => {
                                                                 Showing 1 to 7 of 10 entries
                                                             </div>
                                                         </div>
-                                                        <div className="col-sm-12 col-md-6">
-                                                            <div
-                                                                className="dataTables_paginate paging_simple_numbers"
-                                                                id="DataTables_Table_0_paginate"
-                                                            >
-                                                                <ul className="pagination">
-                                                                    <li
-                                                                        className="paginate_button page-item previous disabled"
-                                                                        id="DataTables_Table_0_previous"
-                                                                    >
-                                                                        <a
-                                                                            aria-controls="DataTables_Table_0"
-                                                                            aria-disabled="true"
-                                                                            role="link"
-                                                                            data-dt-idx="previous"
-                                                                            tabIndex={-1}
-                                                                            className="page-link"
-                                                                        >
-                                                                            <i className="bx bx-chevron-left bx-18px" />
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item active">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_0"
-                                                                            role="link"
-                                                                            aria-current="page"
-                                                                            data-dt-idx={0}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            1
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item ">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_0"
-                                                                            role="link"
-                                                                            data-dt-idx={1}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            2
-                                                                        </a>
-                                                                    </li>
-                                                                    <li
-                                                                        className="paginate_button page-item next"
-                                                                        id="DataTables_Table_0_next"
-                                                                    >
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_0"
-                                                                            role="link"
-                                                                            data-dt-idx="next"
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            <i className="bx bx-chevron-right bx-18px" />
-                                                                        </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
+                                                       
                                                     </div>
                                                     <div style={{ width: "1%" }} />
                                                 </div>
@@ -2805,999 +1863,68 @@ const UserAc = () => {
                                         </div>
                                         {/* /Activity Timeline */}
                                         {/* Invoice table */}
-                                        <div className="card mb-4">
-                                            <div className="card-datatable table-responsive">
-                                                <div
-                                                    id="DataTables_Table_1_wrapper"
-                                                    className="dataTables_wrapper dt-bootstrap5 no-footer"
-                                                >
-                                                    <div className="row mx-6">
-                                                        <div className="col-sm-6 col-12 d-flex align-items-center justify-content-center justify-content-sm-start mt-6 mt-sm-0">
-                                                            <div className="head-label">
-                                                                <h5 className="card-title mb-0">Invoice List</h5>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-sm-6 col-12 d-flex justify-content-center justify-content-md-end align-items-baseline">
-                                                            <div className="dt-action-buttons d-flex justify-content-center flex-md-row align-items-baseline gap-4">
-                                                                <div
-                                                                    className="dataTables_length"
-                                                                    id="DataTables_Table_1_length"
-                                                                >
-                                                                    <label>
-                                                                        <select
-                                                                            name="DataTables_Table_1_length"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            className="form-select mx-0"
-                                                                        >
-                                                                            <option value={10}>10</option>
-                                                                            <option value={25}>25</option>
-                                                                            <option value={50}>50</option>
-                                                                            <option value={100}>100</option>
-                                                                        </select>
-                                                                    </label>
-                                                                </div>
-                                                                <div className="dt-buttons btn-group flex-wrap">
-                                                                    <div className="btn-group">
-                                                                        <button
-                                                                            className="btn btn-secondary buttons-collection dropdown-toggle btn-label-secondary float-sm-end mb-3 mb-sm-0"
-                                                                            tabIndex={0}
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            type="button"
-                                                                            aria-haspopup="dialog"
-                                                                            aria-expanded="false"
-                                                                        >
-                                                                            <span>
-                                                                                <i className="bx bx-export bx-sm me-2" />
-                                                                                Export
-                                                                            </span>
-                                                                        </button>
-                                                                    </div>{" "}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <table
-                                                        className="table datatable-invoice dataTable no-footer dtr-column"
-                                                        id="DataTables_Table_1"
-                                                        aria-describedby="DataTables_Table_1_info"
-                                                        style={{ width: 918 }}
-                                                    >
-                                                        <thead>
-                                                            <tr>
-                                                                <th
-                                                                    className="control sorting dtr-hidden"
-                                                                    tabIndex={0}
-                                                                    aria-controls="DataTables_Table_1"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 0, display: "none" }}
-                                                                    aria-label=": activate to sort column ascending"
-                                                                />
-                                                                <th
-                                                                    className="sorting sorting_desc"
-                                                                    tabIndex={0}
-                                                                    aria-controls="DataTables_Table_1"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 96 }}
-                                                                    aria-label="#: activate to sort column ascending"
-                                                                    aria-sort="descending"
-                                                                >
-                                                                    #
-                                                                </th>
-                                                                <th
-                                                                    className="sorting"
-                                                                    tabIndex={0}
-                                                                    aria-controls="DataTables_Table_1"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 113 }}
-                                                                    aria-label="Status: activate to sort column ascending"
-                                                                >
-                                                                    Status
-                                                                </th>
-                                                                <th
-                                                                    className="sorting"
-                                                                    tabIndex={0}
-                                                                    aria-controls="DataTables_Table_1"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 99 }}
-                                                                    aria-label="Total: activate to sort column ascending"
-                                                                >
-                                                                    Total
-                                                                </th>
-                                                                <th
-                                                                    className="sorting"
-                                                                    tabIndex={0}
-                                                                    aria-controls="DataTables_Table_1"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 172 }}
-                                                                    aria-label="Issued Date: activate to sort column ascending"
-                                                                >
-                                                                    Issued Date
-                                                                </th>
-                                                                <th
-                                                                    className="sorting_disabled"
-                                                                    rowSpan={1}
-                                                                    colSpan={1}
-                                                                    style={{ width: 218 }}
-                                                                    aria-label="Actions"
-                                                                >
-                                                                    Actions
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#5089</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Sent<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 05/09/2020</span>'
-                                                                        data-bs-original-title='<span>Sent<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 05/09/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-success w-px-30 h-px-30">
-                                                                            <i className="bx bx-check bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$3077</td>
-                                                                <td>05/02/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="/Invoice"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#5041</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Sent<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 11/19/2020</span>'
-                                                                        data-bs-original-title='<span>Sent<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 11/19/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-success w-px-30 h-px-30">
-                                                                            <i className="bx bx-check bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$2230</td>
-                                                                <td>02/01/2021</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#5027</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 09/25/2020</span>'
-                                                                        data-bs-original-title='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 09/25/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-secondary w-px-30 h-px-30">
-                                                                            <i className="bx bx-envelope bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$2787</td>
-                                                                <td>09/28/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#5024</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> -$202<br> <span class="fw-medium">Due Date:</span> 08/02/2020</span>'
-                                                                        data-bs-original-title='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> -$202<br> <span class="fw-medium">Due Date:</span> 08/02/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-secondary w-px-30 h-px-30">
-                                                                            <i className="bx bx-envelope bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$5285</td>
-                                                                <td>06/30/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#5020</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Downloaded<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 12/15/2020</span>'
-                                                                        data-bs-original-title='<span>Downloaded<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 12/15/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-info w-px-30 h-px-30">
-                                                                            <i className="bx bx-down-arrow-alt bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$5219</td>
-                                                                <td>07/17/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#4995</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 06/09/2020</span>'
-                                                                        data-bs-original-title='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 06/09/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-secondary w-px-30 h-px-30">
-                                                                            <i className="bx bx-envelope bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$3313</td>
-                                                                <td>08/21/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#4993</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 10/22/2020</span>'
-                                                                        data-bs-original-title='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 10/22/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-secondary w-px-30 h-px-30">
-                                                                            <i className="bx bx-envelope bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$4836</td>
-                                                                <td>07/10/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#4989</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Past Due<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 08/01/2020</span>'
-                                                                        data-bs-original-title='<span>Past Due<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 08/01/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-danger w-px-30 h-px-30">
-                                                                            <i className="bx bx-error bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$5293</td>
-                                                                <td>07/30/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="odd">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#4989</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Downloaded<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 09/23/2020</span>'
-                                                                        data-bs-original-title='<span>Downloaded<br> <span class="fw-medium">Balance:</span> 0<br> <span class="fw-medium">Due Date:</span> 09/23/2020</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-info w-px-30 h-px-30">
-                                                                            <i className="bx bx-down-arrow-alt bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$3623</td>
-                                                                <td>12/01/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr className="even">
-                                                                <td
-                                                                    className="  control"
-                                                                    tabIndex={0}
-                                                                    style={{ display: "none" }}
-                                                                />
-                                                                <td className="sorting_1">
-                                                                    <a href="app-invoice-preview.html">
-                                                                        <span>#4965</span>
-                                                                    </a>
-                                                                </td>
-                                                                <td>
-                                                                    <span
-                                                                        className="d-inline-block"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        aria-label='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> $666<br> <span class="fw-medium">Due Date:</span> 03/18/2021</span>'
-                                                                        data-bs-original-title='<span>Partial Payment<br> <span class="fw-medium">Balance:</span> $666<br> <span class="fw-medium">Due Date:</span> 03/18/2021</span>'
-                                                                    >
-                                                                        <span className="badge badge-center d-flex align-items-center justify-content-center rounded-pill bg-label-secondary w-px-30 h-px-30">
-                                                                            <i className="bx bx-envelope bx-xs" />
-                                                                        </span>
-                                                                    </span>
-                                                                </td>
-                                                                <td>$3789</td>
-                                                                <td>09/27/2020</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <a
-                                                                            href="javascript:;"
-                                                                            className="btn btn-icon delete-record"
-                                                                        >
-                                                                            <i className="bx bx-trash bx-md" />
-                                                                        </a>
-                                                                        <a
-                                                                            href="app-invoice-preview.html"
-                                                                            className="btn btn-icon"
-                                                                            data-bs-toggle="tooltip"
-                                                                            aria-label="Preview"
-                                                                            data-bs-original-title="Preview"
-                                                                        >
-                                                                            <i className="bx bx-show bx-md" />
-                                                                        </a>
-                                                                        <div className="d-inline-block">
-                                                                            <a
-                                                                                href="javascript:;"
-                                                                                className="btn btn-icon dropdown-toggle hide-arrow"
-                                                                                data-bs-toggle="dropdown"
-                                                                            >
-                                                                                <i className="bx bx-dots-vertical-rounded bx-md" />
-                                                                            </a>
-                                                                            <div className="dropdown-menu dropdown-menu-end m-0">
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Download
-                                                                                </a>
-                                                                                <a
-                                                                                    href="app-invoice-edit.html"
-                                                                                    className="dropdown-item"
-                                                                                >
-                                                                                    Edit
-                                                                                </a>
-                                                                                <a href="javascript:;" className="dropdown-item">
-                                                                                    Duplicate
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                    <div className="row mx-6">
-                                                        <div className="col-sm-12 col-xxl-6 text-center text-xxl-start pb-md-2 pb-xxl-0">
-                                                            <div
-                                                                className="dataTables_info"
-                                                                id="DataTables_Table_1_info"
-                                                                role="status"
-                                                                aria-live="polite"
-                                                            >
-                                                                Showing 1 to 10 of 50 entries
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-sm-12 col-xxl-6 d-md-flex justify-content-xxl-end justify-content-center">
-                                                            <div
-                                                                className="dataTables_paginate paging_simple_numbers"
-                                                                id="DataTables_Table_1_paginate"
-                                                            >
-                                                                <ul className="pagination">
-                                                                    <li
-                                                                        className="paginate_button page-item previous disabled"
-                                                                        id="DataTables_Table_1_previous"
-                                                                    >
-                                                                        <a
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            aria-disabled="true"
-                                                                            role="link"
-                                                                            data-dt-idx="previous"
-                                                                            tabIndex={-1}
-                                                                            className="page-link"
-                                                                        >
-                                                                            <i className="bx bx-chevron-left bx-18px" />
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item active">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            aria-current="page"
-                                                                            data-dt-idx={0}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            1
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item ">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            data-dt-idx={1}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            2
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item ">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            data-dt-idx={2}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            3
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item ">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            data-dt-idx={3}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            4
-                                                                        </a>
-                                                                    </li>
-                                                                    <li className="paginate_button page-item ">
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            data-dt-idx={4}
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            5
-                                                                        </a>
-                                                                    </li>
-                                                                    <li
-                                                                        className="paginate_button page-item next"
-                                                                        id="DataTables_Table_1_next"
-                                                                    >
-                                                                        <a
-                                                                            href="#"
-                                                                            aria-controls="DataTables_Table_1"
-                                                                            role="link"
-                                                                            data-dt-idx="next"
-                                                                            tabIndex={0}
-                                                                            className="page-link"
-                                                                        >
-                                                                            <i className="bx bx-chevron-right bx-18px" />
-                                                                        </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                      
                                         {/* /Invoice table */}
                                     </div>
                                     {/*/ User Content */}
                                 </div>
                                 {/* Modal */}
                                 {/* Edit User Modal */}
-                               <div className="modal fade" id="editUserModal" tabIndex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-                <div className="modal-dialog">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h5 className="modal-title" id="editUserModalLabel">Edit User</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div className="modal-body">
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-3">
-                                    <label htmlFor="name" className="form-label">Name</label>
-                                    <input type="text" className="form-control" id="name" name="name" value={formData.name || ''} onChange={handleInputChange} />
+                                <div className="modal fade" id="editUserModal" tabIndex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+                                    <div className="modal-dialog">
+                                        <div className="modal-content">
+                                            <div className="modal-header">
+                                                <h5 className="modal-title" id="editUserModalLabel">Edit User</h5>
+                                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                <form onSubmit={handleSubmit}>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="name" className="form-label">Name</label>
+                                                        <input type="text" className="form-control" id="name" name="name" value={formData.name || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="role" className="form-label">Role</label>
+                                                        <input type="text" className="form-control" id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="dateOfBirth" className="form-label">Date of Birth</label>
+                                                        <input type="date" className="form-control" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="email" className="form-label">Email</label>
+                                                        <input type="email" className="form-control" id="email" name="email" value={formData.email || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="phone" className="form-label">Phone</label>
+                                                        <input type="text" className="form-control" id="phone" name="phone" value={formData.phone || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="shippingAdress" className="form-label">Shipping Address</label>
+                                                        <input type="text" className="form-control" id="shippingAddress" name="shippingAddress" value={formData.shippingAddress || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="billingAdress" className="form-label">Billing Address</label>
+                                                        <input type="text" className="form-control" id="billingAddress" name="billingAddress" value={formData.billingAddress || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="state" className="form-label">State</label>
+                                                        <input type="text" className="form-control" id="state" name="state" value={formData.state || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="city" className="form-label">City</label>
+                                                        <input type="text" className="form-control" id="city" name="city" value={formData.city || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label htmlFor="adress" className="form-label">Address</label>
+                                                        <input type="text" className="form-control" id="address" name="address" value={formData.address || ''} onChange={handleInputChange} />
+                                                    </div>
+                                                    <button type="submit" className="btn btn-primary">Save Changes</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="mb-3">
-                                    <label htmlFor="role" className="form-label">Role</label>
-                                    <input type="text" className="form-control" id="role" name="role" value={formData.role || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="dateOfBirth" className="form-label">Date of Birth</label>
-                                    <input type="date" className="form-control" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="email" className="form-label">Email</label>
-                                    <input type="email" className="form-control" id="email" name="email" value={formData.email || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="phone" className="form-label">Phone</label>
-                                    <input type="text" className="form-control" id="phone" name="phone" value={formData.phone || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="shippingAdress" className="form-label">Shipping Address</label>
-                                    <input type="text" className="form-control" id="shippingAddress" name="shippingAddress" value={formData.shippingAddress || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="billingAdress" className="form-label">Billing Address</label>
-                                    <input type="text" className="form-control" id="billingAddress" name="billingAddress" value={formData.billingAddress || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="state" className="form-label">State</label>
-                                    <input type="text" className="form-control" id="state" name="state" value={formData.state || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="city" className="form-label">City</label>
-                                    <input type="text" className="form-control" id="city" name="city" value={formData.city || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="adress" className="form-label">Address</label>
-                                    <input type="text" className="form-control" id="address" name="address" value={formData.address || ''} onChange={handleInputChange} />
-                                </div>
-                                <button type="submit" className="btn btn-primary">Save Changes</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
                                 {/*/ Edit User Modal */}
                                 {/* Add New Credit Card Modal */}
                                 <div
