@@ -551,7 +551,9 @@ const Oderlist = () => {
                                                             <td>{order.totalAmount}</td>
                                                             <td><span
                                                                 className={`badge px-2 ${order.status === 'pending' ? 'badge bg-label-warning' :
-                                                                        order.status === 'Cancelled' ? 'badge bg-label-danger' :
+                                                                        order.status === 'Cancelled'  ? 'badge bg-label-danger' :
+                                                                        order.status === 'Order cancelled'  ? 'badge bg-label-danger' :
+                                                                        order.status === 'Return Denied' ? 'badge bg-label-danger' :                                                                    
                                                                         order.status === 'Denied' ? 'badge bg-label-danger' :
                                                                         order.status === 'Return' ? 'badge bg-label-danger' :
                                                                                            'badge bg-label-success'

@@ -16,7 +16,7 @@ const Oderdetails = () => {
     const [isArrived, setArrived] = useState(order.status === 'Arrived')
     const [isDenied, setIsDenied] = useState(false);
     const [confirmationTime, setConfirmationTime] = useState(null);
-    console.log('API 1', order)
+  
     // Hàm xử lý toggle cho từng menu
     const fetchProductDetails = async (productId) => {
         try {
@@ -77,25 +77,24 @@ const Oderdetails = () => {
 
     const fetchOrderDetails = async () => {
         try {
-          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${order.orderId}`);
-          setOrderDetails(response.data); // Cập nhật lại state với dữ liệu mới
+            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${order.orderId}`);
+            setOrderDetails(response.data); // Cập nhật lại state với dữ liệu mới
         } catch (error) {
-          console.error('Error fetching updated order:', error);
+            console.error('Error fetching updated order:', error);
         }
-      };
+    };
     const handleConfirmOrder = async () => {
         try {
             const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/confirm/${order.orderId}`);
 
-            // Kiểm tra xem phản hồi có thành công hay không
             if (response.status === 200 || response.status === 204) {
                 console.log('Order confirmed:', response.data);
                 alert('Order confirmed successfully!');
                 await fetchOrderDetails();
                 setIsConfirmed(true);
                 setConfirmationTime(new Date().toLocaleString());
-                
-                // Điều hướng đến trang OrderList sau khi xác nhận
+
+
             } else {
                 console.error('Unexpected response:', response);
                 alert('Failed to confirm order.');
@@ -197,6 +196,10 @@ const Oderdetails = () => {
         }
     }, [order.status]);
 
+    
+      
+      
+
 
 
 
@@ -217,6 +220,141 @@ const Oderdetails = () => {
             return newState;
         });
     };
+
+
+    // Hàm xử lý khi chấp nhận yêu cầu trả hàng
+    const handleApproveReturn = async (orderId) => {
+        try {
+            const response = await axios.post(
+                `https://projectky320240926105522.azurewebsites.net/api/Order/approveReturn/${orderId}`,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 204) {
+                alert('Return request approved successfully!');
+                // Cập nhật trạng thái đơn hàng sau khi chấp nhận
+                fetchOrderById(orderId);
+                navigate('/Oderlist')
+            } else {
+                alert('Something went wrong while approving the return request!');
+            }
+        } catch (error) {
+            console.error('Error approving return request:', error.response?.data || error.message);
+            alert(`Error occurred while approving the return: ${error.response?.data?.message || error.message}`);
+        }
+    };
+
+    // Hàm xử lý khi từ chối yêu cầu trả hàng
+    const handleDenyReturn = async (orderId) => {
+        try {
+            const response = await axios.post(
+                `https://projectky320240926105522.azurewebsites.net/api/Order/denyReturn/${orderId}`,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 204) {
+                alert('Return request denied successfully!');
+                // Cập nhật trạng thái đơn hàng sau khi từ chối
+                fetchOrderById(orderId);
+                navigate('/Oderlist')
+            } else {
+                alert('Something went wrong while denying the return request!');
+            }
+        } catch (error) {
+            console.error('Error denying return request:', error.response?.data || error.message);
+            alert(`Error occurred while denying the return: ${error.response?.data?.message || error.message}`);
+        }
+    };
+
+    // Hàm để lấy lại thông tin đơn hàng và kiểm tra trạng thái
+    const fetchOrderById = async (orderId) => {
+        try {
+            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${orderId}`);
+            console.log('Updated Order Data:', response.data);
+        } catch (error) {
+            console.error('Error fetching updated order:', error.response?.data || error.message);
+        }
+    };
+    const [returnReason, setReturnReason] = useState('');
+    const [returnId, setReturnId] = useState(null); // State để lưu returnId
+  
+    // Hàm lấy lý do trả hàng từ API qua Return ID
+    useEffect(() => {
+        const fetchData = async () => {
+          // Lấy Order ID từ dữ liệu orderDetails
+          const orderId = orderDetails.orderId; // Thay thế 33 bằng orderDetails.orderId
+          console.log(`Order ID being checked: ${orderId}`);
+      
+          // Lấy Return ID dựa trên Order ID
+          const returnId = await fetchReturnIdByOrderId(orderId);
+          console.log(`Return ID for Order ID ${orderId}: ${returnId}`);
+      
+          if (returnId) {
+            // Nếu Return ID tồn tại, lấy lý do trả hàng
+            await fetchReturnReason(returnId);
+          } else {
+            console.log(`No return request found for Order ID ${orderId}`);
+          }
+        };
+      
+        fetchData(); // Gọi hàm khi component render
+      }, [orderDetails.orderId]);
+      
+      const fetchReturnIdByOrderId = async (orderId) => {
+        try {
+          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Return/order/${orderId}`);
+          console.log('Response from API:', response.data);
+          
+          const returnData = response.data;
+          if (returnData && returnData.length > 0) {
+            console.log('Return Data:', returnData); // Kiểm tra dữ liệu trả về
+            return returnData[0].returnId; // Trả về Return ID đầu tiên nếu có
+          } else {
+            console.log('No return request found for this order.');
+            return null;
+          }
+        } catch (error) {
+          console.error('Error fetching Return ID by Order ID:', error);
+          return null;
+        }
+      };
+      
+      const fetchReturnReason = async (returnId) => {
+        try {
+          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Return/${returnId}`);
+          console.log('Return Reason:', response.data.reason); // Kiểm tra lý do trả hàng
+          setReturnReason(response.data.reason); // Cập nhật lý do trả hàng vào state
+        } catch (error) {
+          if (error.response?.status === 404) {
+            console.error(`No return reason found for Return ID: ${returnId}`);
+            alert('No return reason found for this return request.');
+          } else {
+            console.error('Error fetching return reason:', error.response?.data || error.message);
+            alert(`Error occurred while fetching the return reason: ${error.response?.data?.message || error.message}`);
+          }
+        }
+      };
+      
+      
+      
+      
+      
+  
+      
+      
+      
+      
+
 
 
 
@@ -480,7 +618,7 @@ const Oderdetails = () => {
                                         </li>
                                     </ul>
                                 </li>
-                                
+
                                 <li className="menu-item">
                                     <a href="app-ecommerce-manage-reviews.html" className="menu-link">
                                         <div className="text-truncate" data-i18n="Manage Reviews">
@@ -488,7 +626,7 @@ const Oderdetails = () => {
                                         </div>
                                     </a>
                                 </li>
-                               
+
                             </ul>
                         </li>
 
@@ -516,7 +654,7 @@ const Oderdetails = () => {
                                 <i className="bx bx-menu bx-md" />
                             </a>
                         </div>
-                        
+
                         {/* Search Small Screens */}
                         <div className="navbar-search-wrapper search-input-wrapper d-none">
                             <span
@@ -733,7 +871,7 @@ const Oderdetails = () => {
                                                                     </td>
                                                                     {/* Hiển thị tổng giá tiền */}
                                                                     <td>
-                                                                    <span className="text-body">${(item.price * item.quantity).toFixed(2)}</span>
+                                                                        <span className="text-body">${(item.price * item.quantity).toFixed(2)}</span>
 
                                                                     </td>
                                                                 </tr>
@@ -750,18 +888,30 @@ const Oderdetails = () => {
                                                 <div style={{ width: "1%" }} />
                                             </div>
                                             <div className="d-flex justify-content-end align-items-center m-6 mb-2">
-                                               
-                                                        <div className="order-calculations">
-                                                            <div className="d-flex justify-content-start">
-                                                                <h6 className="w-px-100 mb-0">Total:</h6>
-                                                                <h6 className="mb-0">${order.totalAmount}</h6>
-                                                            </div>
-                                                        </div>
-                                                  
-                                        
+
+                                                <div className="order-calculations">
+                                                    <div className="d-flex justify-content-start">
+                                                        <h6 className="w-px-100 mb-0">Total:</h6>
+                                                        <h6 className="mb-0">${order.totalAmount}</h6>
+                                                    </div>
+                                                </div>
+
+
                                             </div>
 
                                         </div>
+                                        <div>
+     </div> {/* <h4>Order ID: {orderDetails.orderId}</h4>
+      <p>Status: {orderDetails.status}</p>
+      {returnId ? (
+        <div>
+          <p>Return ID: {returnId}</p>
+          <p>Reason for Return: {returnReason ? returnReason : 'Loading reason...'}</p>
+        </div>
+      ) : (
+        <p>No return request found for this order.</p>
+      )}
+    </div> */}
                                         {orderDetails.status === 'pending' && (
                                             <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
                                                 <button onClick={handleConfirmOrder} className="btn btn-success">
@@ -772,6 +922,21 @@ const Oderdetails = () => {
                                                 </button>
                                             </div>
                                         )}
+                                        {orderDetails.status === 'Return requested' && (
+                                           <div style={{ display: "flex", flexDirection: 'column', justifyContent: 'center', margin: '15px' }}>
+                                          <h4>Reason for Return</h4>
+<p>Reason for Return: {returnReason ? returnReason : 'Loading reason...'}</p>
+
+                                           <button onClick={() => handleApproveReturn(orderDetails.orderId)} className="btn btn-success">
+                                             Approve Return
+                                           </button>
+                                           <button onClick={() => handleDenyReturn(orderDetails.orderId)} className="btn btn-danger">
+                                             Deny Return
+                                           </button>
+                                         </div>
+                                        )}
+                                         
+
                                     </div>
                                     {isConfirmed && (
                                         <div className="card mb-6">

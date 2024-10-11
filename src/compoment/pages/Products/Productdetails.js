@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 const Producdetails = () => {
   const menuRef = useRef(null);
   const location = useLocation();
-  console.log('Location state:', location.state); // Lấy dữ liệu được truyền từ state
+  console.log('Location:', location.state); // Lấy dữ liệu được truyền từ state
   const { request } = location.state || {};
   const productId = request?.productId;
   console.log('Request:', request);
@@ -50,7 +50,7 @@ const Producdetails = () => {
       // Gọi API để lấy tất cả `productVariants`
       const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/ProductVariant');
       if (response.status === 200) {
-        
+
 
         // Lọc các biến thể dựa trên `productId` của sản phẩm hiện tại
         const variantsForCurrentProduct = response.data.filter(
@@ -304,12 +304,12 @@ const Producdetails = () => {
                       </a>
                     </li>
                     <li className="menu-item active">
-                                            <a href="/Brandlist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Category List">
-                                                    Brand List
-                                                </div>
-                                            </a>
-                                        </li>
+                      <a href="/Brandlist" className="menu-link">
+                        <div className="text-truncate" data-i18n="Category List">
+                          Brand List
+                        </div>
+                      </a>
+                    </li>
                   </ul>
                 </li>
                 <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -443,7 +443,7 @@ const Producdetails = () => {
                 <i className="bx bx-menu bx-md" />
               </a>
             </div>
-           
+
             {/* Search Small Screens */}
             <div className="navbar-search-wrapper search-input-wrapper d-none">
               <span
@@ -523,29 +523,19 @@ const Producdetails = () => {
                     <div className="card-body invoice-preview-header rounded">
                       <div className="d-flex justify-content-between flex-xl-row flex-md-column flex-sm-row flex-column align-items-xl-center align-items-md-start align-items-sm-center align-items-start">
                         <div className="mb-xl-0 mb-6 text-heading">
-                          <img
-                            src={request.image}
-                            alt="Product-9"
-                            className="rounded"
-                            style={{
-                              width: '350px',
-                              height: '250px',
-                              objectFit: 'cover',
-                              borderRadius: '10px',
+                        <img
+                                        src={request.image}
+                                        alt="Product-9"
+                                        style={{width:'80%'}}
+                                      />
 
-                              // Bo tròn góc
-                              border: '2px solid #ccc' // Đường viền màu xám
-                            }}
-                          />
+
                         </div>
                         <div>
                           <h5 className="mb-6">{request.name}</h5>
                           <div className="mb-1 text-heading" style={{
                             width: '450px',
                             height: '170px',
-
-
-
                           }}>
                             <span>Description:</span>
                             <span className="fw-medium" tyle={{
@@ -581,6 +571,7 @@ const Producdetails = () => {
                                 <th>Product </th>
                                 <th>color</th>
                                 <th>Size</th>
+                                <th>image</th>
                                 <th>Quantity</th>
                                 <th>Price</th>
                                 <th>Action</th>
@@ -592,8 +583,15 @@ const Producdetails = () => {
                                   <td>Product {variant.variantId}</td>
                                   <td>{variant.color.colorName}</td>
                                   <td>{variant.size.sizeName}</td>
+                                  <td  style={{width:'250px'}}><img
+                                        src={variant.image}
+                                        alt="Product-9"
+                                        style={{width:'25%'}}
+                                      />
+                                  </td>
+
                                   <td>{variant.stockQuantity}</td>
-                                  <td>${request.price}</td> {/* Hiển thị giá từ sản phẩm chính */}
+                                  <td>${variant.price}</td> {/* Hiển thị giá từ sản phẩm chính */}
                                   <td>
                                     <button onClick={() => handleEditClick(variant)}>Edit</button>
                                   </td>
