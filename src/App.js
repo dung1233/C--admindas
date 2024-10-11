@@ -23,7 +23,7 @@ import Brandlist from './compoment/pages/Products/Brandlist';
 const App = () => {
   return (
     <Router>
-      {/* Định nghĩa Routes */}
+    
       <Routes>
         {/* Trang Home */}
         <Route path="/" element={<Login />} />

@@ -17,39 +17,6 @@ function EditProductVariant() {
       order: false
     };
   });
-  const location = useLocation();
-  const navigate = useNavigate();
-  const variantData = location.state?.variantData;
-  const [productTitle, setProductTitle] = useState('');
-  const [productSku, setProductSku] = useState('');
-  const [description, setDescription] = useState('');
-  const [productPrice, setProductPrice] = useState('');
-  const [imageURL, setImageURL] = useState('');
-  const [category, setCategory] = useState(null);
-  const [vendor, setVendor] = useState(null);
-  // State cho form biến thể
-  const [collection, setCollection] = useState(null); // Color
-  const [status, setStatus] = useState(null); // Size
-  const [stockQuantity, setStockQuantity] = useState(0);
-
-  // State cho options trong dropdown
-  const [collectionOptions, setCollectionOptions] = useState([]);
-  const [statusOptions, setStatusOptions] = useState([]);
-
-  // Lấy dữ liệu từ biến thể khi chỉnh sửa
-  useEffect(() => {
-    if (variantData) {
-      setCollection({ value: variantData.color.colorId, label: variantData.color.colorName });
-      setStatus({ value: variantData.size.sizeId, label: variantData.size.sizeName });
-      setStockQuantity(variantData.stockQuantity);
-    }
-  }, [variantData]);
-
-  // Fetch options cho dropdown từ API
-  useEffect(() => {
-    fetchColors();
-    fetchSizes();
-  }, []);
   const handleMenuToggle = (menuName) => {
     setMenuState((prevState) => {
       const newState = {
@@ -61,88 +28,142 @@ function EditProductVariant() {
       return newState;
     });
   };
-  
-  
 
 
-  const fetchColors = async () => {
-    try {
-      const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Color');
-      const options = response.data.map((color) => ({
-        value: color.colorId,
-        label: color.colorName,
-      }));
-      setCollectionOptions(options);
-    } catch (error) {
-      console.error('Error fetching colors:', error);
-    }
+
+
+
+ const location = useLocation();
+const navigate = useNavigate();
+const variantData = location.state?.variantData;
+const [productTitle, setProductTitle] = useState('');
+const [productSku, setProductSku] = useState('');
+const [description, setDescription] = useState('');
+const [productPrice, setProductPrice] = useState('');
+const [imageURL, setImageURL] = useState('');
+const [category, setCategory] = useState(null);
+const [vendor, setVendor] = useState(null);
+
+// State cho form biến thể
+const [collection, setCollection] = useState(null); // Color
+const [status, setStatus] = useState(null); // Size
+const [stockQuantity, setStockQuantity] = useState(0);
+
+// State cho options trong dropdown
+const [collectionOptions, setCollectionOptions] = useState([]);
+const [statusOptions, setStatusOptions] = useState([]);
+
+// Lấy dữ liệu từ biến thể khi chỉnh sửa
+useEffect(() => {
+  if (variantData) {
+    setCollection({ value: variantData.color.colorId, label: variantData.color.colorName });
+    setStatus({ value: variantData.size.sizeId, label: variantData.size.sizeName });
+    setStockQuantity(variantData.stockQuantity); 
+    setProductPrice(variantData.price);
+    setImageURL(variantData.image);
+  }
+}, [variantData]);
+
+// Fetch options cho dropdown từ API
+useEffect(() => {
+  fetchColors();
+  fetchSizes();
+}, []);
+
+const fetchColors = async () => {
+  try {
+    const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Color');
+    const options = response.data.map((color) => ({
+      value: color.colorId,
+      label: color.colorName,
+    }));
+    setCollectionOptions(options);
+  } catch (error) {
+    console.error('Error fetching colors:', error);
+  }
+};
+
+const fetchSizes = async () => {
+  try {
+    const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Size');
+    const options = response.data.map((size) => ({
+      value: size.sizeId,
+      label: size.sizeName,
+    }));
+    setStatusOptions(options);
+  } catch (error) {
+    console.error('Error fetching sizes:', error);
+  }
+};
+
+// Xử lý cập nhật dữ liệu khi nhấn "Save Changes"
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log('Form submitted');
+
+  // Kiểm tra dữ liệu đầu vào
+  if (!productPrice || !imageURL) {
+    console.error('Price or Image URL is missing!');
+    return;
+  }
+  
+  if (!imageURL.startsWith('http')) {
+    console.error('Invalid image URL!');
+    return;
+  }
+
+  // Tạo dữ liệu cần cập nhật cho biến thể
+  const variantDataToUpdate = {
+    variantId: variantData.variantId,
+    productId: variantData.product.productId,
+    colorId: collection.value,
+    sizeId: status.value,
+    price: parseFloat(productPrice), // Đảm bảo price là số
+    image: imageURL, // URL hợp lệ
+    stockQuantity: parseInt(stockQuantity, 10), // Chuyển đổi về số nguyên
   };
 
-  const fetchSizes = async () => {
-    try {
-      const response = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Size');
-      const options = response.data.map((size) => ({
-        value: size.sizeId,
-        label: size.sizeName,
-      }));
-      setStatusOptions(options);
-    } catch (error) {
-      console.error('Error fetching sizes:', error);
-    }
-  };
+  console.log('Data to send:', variantDataToUpdate);
 
-  // Xử lý cập nhật dữ liệu khi nhấn "Save Changes"
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log('Form submitted');
-
-    // Tạo dữ liệu cần cập nhật cho biến thể
-    const variantDataToUpdate = {
-      variantId: variantData.variantId,
-      productId: variantData.product.productId,
-      colorId: collection.value,
-      sizeId: status.value,
-      stockQuantity: parseInt(stockQuantity, 10), // Chuyển đổi về số nguyên
-    };
-    console.log('Data to send:', variantDataToUpdate);
-
-    try {
-      // Gửi yêu cầu cập nhật biến thể
-      const response = await axios.put(
-        `https://projectky320240926105522.azurewebsites.net/api/ProductVariant/${variantData.variantId}`, // Sử dụng `variantId` để cập nhật biến thể
-        variantDataToUpdate,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('Response from server:', response);
-      console.log('Response status:', response.status);
-
-      if (response.status === 200 || response.status === 204) {
-        console.log('Variant updated successfully:', response.data);
-
-        // Reset các state để xóa text vừa chỉnh sửa
-        setProductTitle('');
-        setProductSku('');
-        setDescription('');
-        setProductPrice('');
-        setImageURL('');
-        setCategory(null);
-        setVendor(null);
-        setCollection(null);
-        setStatus(null);
-
-        // Sau khi reset state, reload lại trang để cập nhật mới nhất
-        navigate('/Product');
+  try {
+    // Gửi yêu cầu cập nhật biến thể
+    const response = await axios.put(
+      `https://projectky320240926105522.azurewebsites.net/api/ProductVariant/${variantData.variantId}`,
+      variantDataToUpdate,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }
-    } catch (error) {
-      console.error('Error updating variant:', error.response?.data || error.message);
-    }
+    );
 
-  };
+    console.log('Response from server:', response);
+    console.log('Response status:', response.status);
+
+    if (response.status === 200 || response.status === 204) {
+      console.log('Variant updated successfully:', response.data);
+
+      // Reset state sau khi cập nhật thành công
+      setProductTitle('');
+      setProductSku('');
+      setDescription('');
+      setProductPrice('');
+      setImageURL('');
+      setCategory(null);
+      setVendor(null);
+      setCollection(null);
+      setStatus(null);
+
+      // Điều hướng về trang Product sau khi cập nhật thành công
+      navigate('/Product');
+    }
+  } catch (error) {
+    console.error('Error updating variant:', error.response?.data || error.message);
+  }
+  console.log('Image before sending:', imageURL);
+console.log('Price before sending:', productPrice);
+};
+
 
   return (
     <div className="layout-wrapper layout-content-navbar">
@@ -223,7 +244,7 @@ function EditProductVariant() {
 
           {/* Menu Inner */}
           <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-            
+
 
             <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
               <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
@@ -262,12 +283,12 @@ function EditProductVariant() {
                       </a>
                     </li>
                     <li className="menu-item active">
-                                                <a href="/Editproduct" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Add Product">
-                                                        Edit Product
-                                                    </div>
-                                                </a>
-                                            </li>
+                      <a href="/Editproduct" className="menu-link">
+                        <div className="text-truncate" data-i18n="Add Product">
+                          Edit Product
+                        </div>
+                      </a>
+                    </li>
                     <li className="menu-item">
                       <a href="/Catenorylist" className="menu-link">
                         <div className="text-truncate" data-i18n="Category List">
@@ -276,12 +297,12 @@ function EditProductVariant() {
                       </a>
                     </li>
                     <li className="menu-item ">
-                                            <a href="/Brandlist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Category List">
-                                                    Brand List
-                                                </div>
-                                            </a>
-                                        </li>
+                      <a href="/Brandlist" className="menu-link">
+                        <div className="text-truncate" data-i18n="Category List">
+                          Brand List
+                        </div>
+                      </a>
+                    </li>
                   </ul>
                 </li>
                 <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
@@ -415,7 +436,7 @@ function EditProductVariant() {
                 <i className="bx bx-menu bx-md" />
               </a>
             </div>
-           
+
             {/* Search Small Screens */}
             <div className="navbar-search-wrapper search-input-wrapper d-none">
               <span
@@ -496,7 +517,7 @@ function EditProductVariant() {
                     <p className="mb-0"> ProductVariant</p>
                   </div>
                   <div className="d-flex align-content-center flex-wrap gap-4">
-                    
+
                   </div>
                 </div>
                 <div className="row">
@@ -534,7 +555,34 @@ function EditProductVariant() {
                         onChange={(e) => setStockQuantity(e.target.value)}
                       />
                     </div>
-
+                    <div className="col">
+                      <label className="form-label" htmlFor="ecommerce-product-barcode">
+                        Price
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="ecommerce-product-barcode"
+                        placeholder="Giá"
+                        name="productBarcode"
+                        aria-label="Product barcode"
+                        value={productPrice}
+                        onChange={(e) => setProductPrice(e.target.value)}
+                      />
+                    </div>
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                      <h5 className="mb-0 card-title">imageURL</h5>
+                    </div>
+                    <div className="card-body">
+                      {/* Thay đổi thành URL nhập liệu */}
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Nhập URL ảnh sản phẩm"
+                        value={imageURL}
+                        onChange={(e) => setImageURL(e.target.value)} // Cập nhật URL ảnh vào state
+                      />
+                    </div>
                     {/* Nút Submit */}
                     <button type="submit" className="btn btn-primary">Save Changes</button>
                   </form>

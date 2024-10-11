@@ -40,7 +40,7 @@ const Addproduct = () => {
                 {
                     name: brandName,
                     slug: brandSlug.toLowerCase().replace(/ /g, '-'),
-                    image: brandImage,
+                    image: brandImage, 
                     description: brandDescription,
                 },
                 {
@@ -48,8 +48,9 @@ const Addproduct = () => {
                         'Content-Type': 'application/json',
                     },
                 }
+                
             );
-            Navigate('/Brandlist')
+            alert("thêm thành công")
             console.log('Brand added:', response.data);
             setBrandName('');
             setBrandSlug('');

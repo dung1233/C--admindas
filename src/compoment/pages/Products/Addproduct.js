@@ -27,6 +27,7 @@ const Addproduct = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [image, setImage] = useState(null);
   const [imageURL, setImageURL] = useState('');
+  const [imagesURL, setImageaURL] = useState('');
   const [vendorOptions, setVendorOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [collectionOptions, setCollectionOptions] = useState([]);
@@ -89,6 +90,8 @@ const Addproduct = () => {
       productId, // Sử dụng productId vừa lấy từ phản hồi
       colorId: collection.value, // ID của màu
       sizeId: status.value, // ID của kích thước
+      image: imagesURL,
+     
       stockQuantity: productQuantity, // Giá trị của số lượng (bạn cần đảm bảo đã có biến `productQuantity`)
       // Các trường khác nếu cần, tùy thuộc vào cấu trúc của ProductVariant
     };
@@ -649,6 +652,19 @@ const Addproduct = () => {
                             {/* Nút Submit */}
 
                           </div>
+                        </div>
+                      </div>
+                      <div className="col-12 col-lg-4">
+                        {/* Thay đổi thành URL nhập liệu */}
+                        <div className="mb-6">
+                          <label className="form-label mb-1"> <h5>imageURL Variant</h5></label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Nhập URL ảnh sản phẩm"
+                          value={imagesURL}
+                          onChange={(e) => setImageaURL(e.target.value)} // Cập nhật URL ảnh vào state
+                        />
                         </div>
                       </div>
 

@@ -6,13 +6,10 @@ const Login = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loginErrors, setLoginErrors] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const navigate = useNavigate();
-  const token = localStorage.getItem('jwtToken'); 
-  console.log("Co token hay k:" ,token)
-
-  // Hàm kiểm tra định dạng email 
+  // Hàm kiểm tra định dạng email
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -39,37 +36,49 @@ const Login = () => {
   // Xử lý form đăng nhập
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
-
+    
     if (validateLogin()) {
       setIsLoading(true);
       try {
         const response = await axios.post(
-          'https://projectky320240926105522.azurewebsites.net/api/Auth/login', // Thay bằng URL API của bạn
-          loginData, // Dữ liệu đăng nhập
+          'https://projectky320240926105522.azurewebsites.net/api/Admin/login',
+          loginData,
           {
             headers: {
               'Content-Type': 'application/json',
             },
+            withCredentials: true, // Send cookies along with the request
           }
         );
 
-        const data = response.data; // Lấy dữ liệu từ phản hồi của API
+        const data = response.data;
         console.log("Dữ liệu đăng nhập thành công:", data);
 
-        // Lưu JWT và tên người dùng vào localStorage
-        localStorage.setItem('jwtToken', data.token);
-        localStorage.setItem('userName', data.userName);
-
-        setSuccessMessage("Đăng nhập thành công!");
-        navigate("/"); // Điều hướng về trang chủ sau khi đăng nhập thành công
+        // Alert success message
+        window.alert("Đăng nhập thành công!");
+        
+       
+ 
+        // Optionally, navigate to the home page or dashboard
+        navigate("/Commerce");
+        // Force reloading the page to ensure all state is updated and cleared
+        window.location.reload();
       } catch (error) {
         if (error.response) {
-          setErrorMessage('Đăng nhập thất bại: ' + error.response.data.message);
+          // Check for specific error codes and display detailed messages
+          if (error.response.status === 401) {
+            // Unauthorized: Incorrect credentials
+            window.alert('Sai tài khoản hoặc mật khẩu.');
+          } else if (error.response.status === 403) {
+            // Forbidden: User does not have permission
+            window.alert('Bạn không có quyền truy cập. Vui lòng liên hệ với quản trị viên.');
+          } else {
+            // Any other error status or unknown error
+            window.alert('Đăng nhập thất bại: ' + error.response.data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+          }
           console.error("Lỗi đăng nhập:", error.response.data);
         } else {
-          setErrorMessage('Đăng nhập thất bại. Vui lòng thử lại.');
+          window.alert('Đăng nhập thất bại. Vui lòng thử lại.');
           console.error("Lỗi đăng nhập:", error);
         }
       } finally {
@@ -126,7 +135,7 @@ const Login = () => {
                   {loginErrors.password && <p style={{ color: 'red' }}>{loginErrors.password}</p>}
                 </div>
                 <button className="btn btn-primary d-grid w-100" disabled={isLoading}>
-                  {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  {isLoading ? 'Log In...' : 'Log In'}
                 </button>
                 {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
                 {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}

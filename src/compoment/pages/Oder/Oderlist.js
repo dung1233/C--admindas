@@ -195,7 +195,7 @@ const Oderlist = () => {
                             </a>
                             <ul className="menu-sub">
                                 <li className="menu-item">
-                                    <a href="/" className="menu-link">
+                                    <a href="/Commerce" className="menu-link">
                                         <div className="text-truncate" data-i18n="Dashboard">
                                             Dashboard
                                         </div>
@@ -551,7 +551,9 @@ const Oderlist = () => {
                                                             <td>{order.totalAmount}</td>
                                                             <td><span
                                                                 className={`badge px-2 ${order.status === 'pending' ? 'badge bg-label-warning' :
-                                                                        order.status === 'Cancelled' ? 'badge bg-label-danger' :
+                                                                        order.status === 'Cancelled'  ? 'badge bg-label-danger' :
+                                                                        order.status === 'Order cancelled'  ? 'badge bg-label-danger' :
+                                                                        order.status === 'Return Denied' ? 'badge bg-label-danger' :                                                                    
                                                                         order.status === 'Denied' ? 'badge bg-label-danger' :
                                                                         order.status === 'Return' ? 'badge bg-label-danger' :
                                                                                            'badge bg-label-success'
@@ -576,10 +578,7 @@ const Oderlist = () => {
                                                                                 View
                                                                             </Link>
                                                                         </a>
-                                                                        <a href="javascript:void(0);" className="dropdown-item delete-record"
-                                                                        >
-                                                                            Delete
-                                                                        </a>
+                                                                       
                                                                     </div>
                                                                 </div>
                                                             </td>

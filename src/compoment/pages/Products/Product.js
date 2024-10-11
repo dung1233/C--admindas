@@ -746,11 +746,11 @@ const Product = () => {
                                 <div className="d-flex justify-content-start align-items-center product-name">
                                   <div className="avatar-wrapper">
                                     <div className="avatar avatar me-4 rounded-2 bg-label-secondary">
-                                      <img
-                                        src={product.image}
-                                        alt="Product-9"
-                                        className="rounded"
-                                      />
+                                        <img
+                                          src={product.image}
+                                          alt="Product-9"
+                                          className="rounded"
+                                        />
                                     </div>
                                   </div>
                                   <div className="d-flex flex-column">

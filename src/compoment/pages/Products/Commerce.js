@@ -1,10 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Line, Pie } from 'react-chartjs-2';
+import { Chart, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, TimeScale, Title, Tooltip, Legend } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import axios from 'axios';
+import 'chartjs-adapter-date-fns';
+
+
+Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, TimeScale, Title, Tooltip, Legend);
+
+
+
+
 const Commerce = () => {
     // nút log out 
     const navigate = useNavigate(); // Sử dụng hook để điều hướng
-    const token = localStorage.getItem('jwtToken');
-    console.log("Co token hay k:", token)
+    const token = localStorage.getItem('jwtToken')
     const [isUserDropdownOpen, setUserDropdownOpen] = useState(false);
     const [isNotificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
 
@@ -14,12 +25,130 @@ const Commerce = () => {
         // Đảm bảo các dropdown khác đóng lại khi mở dropdown này
         setNotificationDropdownOpen(false);
     };
+    const [chartData, setChartData] = useState({ labels: [], data: [] });
+  const [statusChartData, setStatusChartData] = useState({ labels: [], datasets: [] });
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      try {
+        // Gọi API để lấy danh sách order
+        const ordersResponse = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Order');
+        const orders = ordersResponse.data;
+
+        // Tạo một đối tượng để lưu trữ tổng số tiền theo ngày
+        const totalAmountByDate = {};
+
+        // Tạo một đối tượng để lưu trữ số lượng trạng thái đơn hàng
+        const statusCount = {};
+
+        // Tính tổng số tiền cho mỗi ngày và đếm số lượng từng trạng thái đơn hàng
+        orders.forEach(order => {
+          const orderDate = new Date(order.orderDate).toISOString().split('T')[0]; // Lấy ngày dạng 'YYYY-MM-DD'
+          if (totalAmountByDate[orderDate]) {
+            totalAmountByDate[orderDate] += order.totalAmount;
+          } else {
+            totalAmountByDate[orderDate] = order.totalAmount;
+          }
+
+          const status = order.status;
+          if (statusCount[status]) {
+            statusCount[status]++;
+          } else {
+            statusCount[status] = 1;
+          }
+        });
+
+        // Tạo mảng labels và data từ đối tượng tổng số tiền theo ngày
+        const labels = Object.keys(totalAmountByDate).sort(); // Danh sách ngày (được sắp xếp)
+        const data = labels.map(label => totalAmountByDate[label]); // Tổng tiền cho mỗi ngày
+
+        setChartData({ labels, data });
+
+        // Tạo mảng labels và datasets cho Pie Chart từ trạng thái đơn hàng
+        const statusLabels = Object.keys(statusCount);
+        const statusData = Object.values(statusCount);
+        setStatusChartData({
+          labels: statusLabels,
+          datasets: [
+            {
+              label: 'Order Status',
+              data: statusData,
+              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+              hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
+
+    fetchOrderData();
+  }, []);
+
+  // Dữ liệu cho Line Chart (Tổng tiền theo ngày)
+  const lineChartData = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: 'Total Amount by Date',
+        data: chartData.data,
+        borderColor: 'rgba(75,192,192,1)',
+        backgroundColor: 'rgba(75,192,192,0.4)',
+        fill: false,
+      },
+    ],
+  };
+
+  // Cấu hình tùy chọn cho Line Chart
+  const lineChartOptions = {
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'day', // Đơn vị thời gian
+        },
+        title: {
+          display: true,
+          text: 'Date',
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Total Amount',
+        },
+      },
+    },
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+      },
+    },
+  };
+
+  // Cấu hình tùy chọn cho Pie Chart (Tỷ lệ trạng thái đơn hàng)
+  const pieChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+    },
+  };
+
+
+    
 
     // Toggle notification dropdown
     const toggleNotificationDropdown = () => {
         setNotificationDropdownOpen(!isNotificationDropdownOpen);
         setUserDropdownOpen(false);
     };
+
 
     // Close all dropdowns when clicking outside
     const closeDropdowns = () => {
@@ -58,6 +187,7 @@ const Commerce = () => {
     });
 
 
+
     // Hàm xử lý toggle cho từng menu
     const handleMenuToggle = (menuName) => {
         setMenuState((prevState) => ({
@@ -92,6 +222,7 @@ const Commerce = () => {
         return () => {
             window.removeEventListener('resize', handleResize);
         };
+
     }, []);
     return (
         <div>
@@ -361,7 +492,7 @@ const Commerce = () => {
                                                 onClick={toggleUserDropdown}
                                                 onBlur={closeDropdowns}
                                             >
-                                                <img style={{width:'20%'}}
+                                                <img style={{ width: '20%' }}
                                                     src="../assets/img/avatars/1.png"
                                                     alt="User Avatar"
                                                     className="rounded-circle"
@@ -403,23 +534,12 @@ const Commerce = () => {
                                                         </p>
                                                         <h5 className="card-title text-primary mb-0">$48.9k</h5>
                                                         <p className="mb-3">78% of target 🚀</p>
-                                                        <a
-                                                            href="javascript:;"
-                                                            className="btn btn-sm btn-primary mb-1"
-                                                        >
-                                                            View sales
-                                                        </a>
+
                                                     </div>
                                                 </div>
                                                 <div className="col-5">
                                                     <div className="card-body pb-0 text-end">
-                                                        <img
-                                                            src="../../assets/img/illustrations/prize-light.png"
-                                                            width={91}
-                                                            height={144}
-                                                            className="rounded-start"
-                                                            alt="View Sales"
-                                                        />
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -432,664 +552,20 @@ const Commerce = () => {
                                                 <div className="col-md-6 card-separator">
                                                     <div className="p-6">
                                                         <div className="card-title d-flex align-items-start justify-content-between">
-                                                            <h5 className="mb-0">New Visitors</h5>
-                                                            <small>Last Week</small>
+                                                            
+                                                          
                                                         </div>
                                                         <div
                                                             className="d-flex justify-content-between"
                                                             style={{ position: "relative" }}
                                                         >
-                                                            <div className="mt-auto">
-                                                                <h3 className="mb-1">23%</h3>
-                                                                <small className="text-danger text-nowrap fw-medium">
-                                                                    <i className="bx bx-down-arrow-alt" /> -13.24%
-                                                                </small>
-                                                            </div>
-                                                            <div id="visitorsChart" style={{ minHeight: 120 }}>
-                                                                <div
-                                                                    id="apexchartspfwoyz54"
-                                                                    className="apexcharts-canvas apexchartspfwoyz54 apexcharts-theme-light"
-                                                                    style={{ width: 200, height: 120 }}
-                                                                >
-                                                                    <svg
-                                                                        id="SvgjsSvg2431"
-                                                                        width={200}
-                                                                        height={120}
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        version="1.1"
-                                                                        xmlnsXlink="http://www.w3.org/1999/xlink"
-
-                                                                        className="apexcharts-svg"
-                                                                        xmlns-data="ApexChartsNS"
-                                                                        transform="translate(0, 0)"
-                                                                        style={{ background: "transparent" }}
-                                                                    >
-                                                                        <g
-                                                                            id="SvgjsG2433"
-                                                                            className="apexcharts-inner apexcharts-graphical"
-                                                                            transform="translate(22, 5)"
-                                                                        >
-                                                                            <defs id="SvgjsDefs2432">
-                                                                                <linearGradient
-                                                                                    id="SvgjsLinearGradient2436"
-                                                                                    x1={0}
-                                                                                    y1={0}
-                                                                                    x2={0}
-                                                                                    y2={1}
-                                                                                >
-                                                                                    <stop
-                                                                                        id="SvgjsStop2437"
-                                                                                        stopOpacity="0.4"
-                                                                                        stopColor="rgba(216,227,240,0.4)"
-                                                                                        offset={0}
-                                                                                    />
-                                                                                    <stop
-                                                                                        id="SvgjsStop2438"
-                                                                                        stopOpacity="0.5"
-                                                                                        stopColor="rgba(190,209,230,0.5)"
-                                                                                        offset={1}
-                                                                                    />
-                                                                                    <stop
-                                                                                        id="SvgjsStop2439"
-                                                                                        stopOpacity="0.5"
-                                                                                        stopColor="rgba(190,209,230,0.5)"
-                                                                                        offset={1}
-                                                                                    />
-                                                                                </linearGradient>
-                                                                                <clipPath id="gridRectMaskpfwoyz54">
-                                                                                    <rect
-                                                                                        id="SvgjsRect2441"
-                                                                                        width={172}
-                                                                                        height="88.70079907417298"
-                                                                                        x={-2}
-                                                                                        y={0}
-                                                                                        rx={0}
-                                                                                        ry={0}
-                                                                                        opacity={1}
-                                                                                        strokeWidth={0}
-                                                                                        stroke="none"
-                                                                                        strokeDasharray={0}
-                                                                                        fill="#fff"
-                                                                                    />
-                                                                                </clipPath>
-                                                                                <clipPath id="forecastMaskpfwoyz54" />
-                                                                                <clipPath id="nonForecastMaskpfwoyz54" />
-                                                                                <clipPath id="gridRectMarkerMaskpfwoyz54">
-                                                                                    <rect
-                                                                                        id="SvgjsRect2442"
-                                                                                        width={172}
-                                                                                        height="92.70079907417298"
-                                                                                        x={-2}
-                                                                                        y={-2}
-                                                                                        rx={0}
-                                                                                        ry={0}
-                                                                                        opacity={1}
-                                                                                        strokeWidth={0}
-                                                                                        stroke="none"
-                                                                                        strokeDasharray={0}
-                                                                                        fill="#fff"
-                                                                                    />
-                                                                                </clipPath>
-                                                                            </defs>
-                                                                            <rect
-                                                                                id="SvgjsRect2440"
-                                                                                width="14.4"
-                                                                                height="88.70079907417298"
-                                                                                x={0}
-                                                                                y={0}
-                                                                                rx={0}
-                                                                                ry={0}
-                                                                                opacity={1}
-                                                                                strokeWidth={0}
-                                                                                strokeDasharray={3}
-                                                                                fill="url(#SvgjsLinearGradient2436)"
-                                                                                className="apexcharts-xcrosshairs"
-                                                                                y2="88.70079907417298"
-                                                                                filter="none"
-                                                                                fillOpacity="0.9"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2461"
-                                                                                className="apexcharts-xaxis"
-                                                                                transform="translate(0, 0)"
-                                                                            >
-                                                                                <g
-                                                                                    id="SvgjsG2462"
-                                                                                    className="apexcharts-xaxis-texts-g"
-                                                                                    transform="translate(0, -4)"
-                                                                                >
-                                                                                    <text
-                                                                                        id="SvgjsText2464"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={12}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2465">M</tspan>
-                                                                                        <title>M</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2467"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={36}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2468">T</tspan>
-                                                                                        <title>T</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2470"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={60}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2471">W</tspan>
-                                                                                        <title>W</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2473"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={84}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2474">T</tspan>
-                                                                                        <title>T</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2476"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={108}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2477">F</tspan>
-                                                                                        <title>F</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2479"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={132}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2480">S</tspan>
-                                                                                        <title>S</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2482"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={156}
-                                                                                        y="117.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2483">S</tspan>
-                                                                                        <title>S</title>
-                                                                                    </text>
-                                                                                </g>
-                                                                            </g>
-                                                                            <g id="SvgjsG2486" className="apexcharts-grid">
-                                                                                <g
-                                                                                    id="SvgjsG2487"
-                                                                                    className="apexcharts-gridlines-horizontal"
-                                                                                    style={{ display: "none" }}
-                                                                                >
-                                                                                    <line
-                                                                                        id="SvgjsLine2489"
-                                                                                        x1={0}
-                                                                                        y1={0}
-                                                                                        x2={168}
-                                                                                        y2={0}
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2490"
-                                                                                        x1={0}
-                                                                                        y1="17.740159814834595"
-                                                                                        x2={168}
-                                                                                        y2="17.740159814834595"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2491"
-                                                                                        x1={0}
-                                                                                        y1="35.48031962966919"
-                                                                                        x2={168}
-                                                                                        y2="35.48031962966919"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2492"
-                                                                                        x1={0}
-                                                                                        y1="53.22047944450378"
-                                                                                        x2={168}
-                                                                                        y2="53.22047944450378"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2493"
-                                                                                        x1={0}
-                                                                                        y1="70.96063925933838"
-                                                                                        x2={168}
-                                                                                        y2="70.96063925933838"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2494"
-                                                                                        x1={0}
-                                                                                        y1="88.70079907417298"
-                                                                                        x2={168}
-                                                                                        y2="88.70079907417298"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                </g>
-                                                                                <g
-                                                                                    id="SvgjsG2488"
-                                                                                    className="apexcharts-gridlines-vertical"
-                                                                                    style={{ display: "none" }}
-                                                                                />
-                                                                                <line
-                                                                                    id="SvgjsLine2496"
-                                                                                    x1={0}
-                                                                                    y1="88.70079907417298"
-                                                                                    x2={168}
-                                                                                    y2="88.70079907417298"
-                                                                                    stroke="transparent"
-                                                                                    strokeDasharray={0}
-                                                                                    strokeLinecap="butt"
-                                                                                />
-                                                                                <line
-                                                                                    id="SvgjsLine2495"
-                                                                                    x1={0}
-                                                                                    y1={1}
-                                                                                    x2={0}
-                                                                                    y2="88.70079907417298"
-                                                                                    stroke="transparent"
-                                                                                    strokeDasharray={0}
-                                                                                    strokeLinecap="butt"
-                                                                                />
-                                                                            </g>
-                                                                            <g
-                                                                                id="SvgjsG2443"
-                                                                                className="apexcharts-bar-series apexcharts-plot-series"
-                                                                            >
-                                                                                <g
-                                                                                    id="SvgjsG2444"
-                                                                                    className="apexcharts-series"
-                                                                                    rel={1}
-                                                                                    seriesname="seriesx1"
-                                                                                    data-realindex={0}
-                                                                                >
-                                                                                    <path
-                                                                                        id="SvgjsPath2448"
-                                                                                        d="M 4.8 79.70079907417298L 4.8 62.22047944450379Q 4.8 53.22047944450379 13.8 53.22047944450379L 10.2 53.22047944450379Q 19.2 53.22047944450379 19.2 62.22047944450379L 19.2 62.22047944450379L 19.2 79.70079907417298Q 19.2 88.70079907417298 10.2 88.70079907417298L 13.8 88.70079907417298Q 4.8 88.70079907417298 4.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 4.8 79.70079907417298L 4.8 62.22047944450379Q 4.8 53.22047944450379 13.8 53.22047944450379L 10.2 53.22047944450379Q 19.2 53.22047944450379 19.2 62.22047944450379L 19.2 62.22047944450379L 19.2 79.70079907417298Q 19.2 88.70079907417298 10.2 88.70079907417298L 13.8 88.70079907417298Q 4.8 88.70079907417298 4.8 79.70079907417298z"
-                                                                                        pathfrom="M 4.8 79.70079907417298L 4.8 79.70079907417298L 19.2 79.70079907417298L 19.2 79.70079907417298L 19.2 79.70079907417298L 19.2 79.70079907417298L 19.2 79.70079907417298L 4.8 79.70079907417298"
-                                                                                        cy="53.22047944450379"
-                                                                                        cx="28.8"
-                                                                                        j={0}
-                                                                                        val={40}
-                                                                                        barheight="35.48031962966919"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2450"
-                                                                                        d="M 28.8 79.70079907417298L 28.8 13.435039953708653Q 28.8 4.435039953708653 37.8 4.435039953708653L 34.2 4.435039953708653Q 43.2 4.435039953708653 43.2 13.435039953708653L 43.2 13.435039953708653L 43.2 79.70079907417298Q 43.2 88.70079907417298 34.2 88.70079907417298L 37.8 88.70079907417298Q 28.8 88.70079907417298 28.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 28.8 79.70079907417298L 28.8 13.435039953708653Q 28.8 4.435039953708653 37.8 4.435039953708653L 34.2 4.435039953708653Q 43.2 4.435039953708653 43.2 13.435039953708653L 43.2 13.435039953708653L 43.2 79.70079907417298Q 43.2 88.70079907417298 34.2 88.70079907417298L 37.8 88.70079907417298Q 28.8 88.70079907417298 28.8 79.70079907417298z"
-                                                                                        pathfrom="M 28.8 79.70079907417298L 28.8 79.70079907417298L 43.2 79.70079907417298L 43.2 79.70079907417298L 43.2 79.70079907417298L 43.2 79.70079907417298L 43.2 79.70079907417298L 28.8 79.70079907417298"
-                                                                                        cy="4.435039953708653"
-                                                                                        cx="52.8"
-                                                                                        j={1}
-                                                                                        val={95}
-                                                                                        barheight="84.26575912046432"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2452"
-                                                                                        d="M 52.8 79.70079907417298L 52.8 44.4803196296692Q 52.8 35.4803196296692 61.8 35.4803196296692L 58.2 35.4803196296692Q 67.2 35.4803196296692 67.2 44.4803196296692L 67.2 44.4803196296692L 67.2 79.70079907417298Q 67.2 88.70079907417298 58.2 88.70079907417298L 61.8 88.70079907417298Q 52.8 88.70079907417298 52.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 52.8 79.70079907417298L 52.8 44.4803196296692Q 52.8 35.4803196296692 61.8 35.4803196296692L 58.2 35.4803196296692Q 67.2 35.4803196296692 67.2 44.4803196296692L 67.2 44.4803196296692L 67.2 79.70079907417298Q 67.2 88.70079907417298 58.2 88.70079907417298L 61.8 88.70079907417298Q 52.8 88.70079907417298 52.8 79.70079907417298z"
-                                                                                        pathfrom="M 52.8 79.70079907417298L 52.8 79.70079907417298L 67.2 79.70079907417298L 67.2 79.70079907417298L 67.2 79.70079907417298L 67.2 79.70079907417298L 67.2 79.70079907417298L 52.8 79.70079907417298"
-                                                                                        cy="35.4803196296692"
-                                                                                        cx="76.8"
-                                                                                        j={2}
-                                                                                        val={60}
-                                                                                        barheight="53.22047944450378"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2454"
-                                                                                        d="M 76.8 79.70079907417298L 76.8 57.78543949079514Q 76.8 48.78543949079514 85.8 48.78543949079514L 82.2 48.78543949079514Q 91.2 48.78543949079514 91.2 57.78543949079514L 91.2 57.78543949079514L 91.2 79.70079907417298Q 91.2 88.70079907417298 82.2 88.70079907417298L 85.8 88.70079907417298Q 76.8 88.70079907417298 76.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 76.8 79.70079907417298L 76.8 57.78543949079514Q 76.8 48.78543949079514 85.8 48.78543949079514L 82.2 48.78543949079514Q 91.2 48.78543949079514 91.2 57.78543949079514L 91.2 57.78543949079514L 91.2 79.70079907417298Q 91.2 88.70079907417298 82.2 88.70079907417298L 85.8 88.70079907417298Q 76.8 88.70079907417298 76.8 79.70079907417298z"
-                                                                                        pathfrom="M 76.8 79.70079907417298L 76.8 79.70079907417298L 91.2 79.70079907417298L 91.2 79.70079907417298L 91.2 79.70079907417298L 91.2 79.70079907417298L 91.2 79.70079907417298L 76.8 79.70079907417298"
-                                                                                        cy="48.78543949079514"
-                                                                                        cx="100.8"
-                                                                                        j={3}
-                                                                                        val={45}
-                                                                                        barheight="39.915359583377835"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2456"
-                                                                                        d="M 100.8 79.70079907417298L 100.8 17.870079907417306Q 100.8 8.870079907417306 109.8 8.870079907417306L 106.2 8.870079907417306Q 115.2 8.870079907417306 115.2 17.870079907417306L 115.2 17.870079907417306L 115.2 79.70079907417298Q 115.2 88.70079907417298 106.2 88.70079907417298L 109.8 88.70079907417298Q 100.8 88.70079907417298 100.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 100.8 79.70079907417298L 100.8 17.870079907417306Q 100.8 8.870079907417306 109.8 8.870079907417306L 106.2 8.870079907417306Q 115.2 8.870079907417306 115.2 17.870079907417306L 115.2 17.870079907417306L 115.2 79.70079907417298Q 115.2 88.70079907417298 106.2 88.70079907417298L 109.8 88.70079907417298Q 100.8 88.70079907417298 100.8 79.70079907417298z"
-                                                                                        pathfrom="M 100.8 79.70079907417298L 100.8 79.70079907417298L 115.2 79.70079907417298L 115.2 79.70079907417298L 115.2 79.70079907417298L 115.2 79.70079907417298L 115.2 79.70079907417298L 100.8 79.70079907417298"
-                                                                                        cy="8.870079907417306"
-                                                                                        cx="124.8"
-                                                                                        j={4}
-                                                                                        val={90}
-                                                                                        barheight="79.83071916675567"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2458"
-                                                                                        d="M 124.8 79.70079907417298L 124.8 53.350399537086496Q 124.8 44.350399537086496 133.8 44.350399537086496L 130.2 44.350399537086496Q 139.2 44.350399537086496 139.2 53.350399537086496L 139.2 53.350399537086496L 139.2 79.70079907417298Q 139.2 88.70079907417298 130.2 88.70079907417298L 133.8 88.70079907417298Q 124.8 88.70079907417298 124.8 79.70079907417298z"
-                                                                                        fill="rgba(105,108,255,0.85)"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 124.8 79.70079907417298L 124.8 53.350399537086496Q 124.8 44.350399537086496 133.8 44.350399537086496L 130.2 44.350399537086496Q 139.2 44.350399537086496 139.2 53.350399537086496L 139.2 53.350399537086496L 139.2 79.70079907417298Q 139.2 88.70079907417298 130.2 88.70079907417298L 133.8 88.70079907417298Q 124.8 88.70079907417298 124.8 79.70079907417298z"
-                                                                                        pathfrom="M 124.8 79.70079907417298L 124.8 79.70079907417298L 139.2 79.70079907417298L 139.2 79.70079907417298L 139.2 79.70079907417298L 139.2 79.70079907417298L 139.2 79.70079907417298L 124.8 79.70079907417298"
-                                                                                        cy="44.350399537086496"
-                                                                                        cx="148.8"
-                                                                                        j={5}
-                                                                                        val={50}
-                                                                                        barheight="44.35039953708648"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2460"
-                                                                                        d="M 148.8 79.70079907417298L 148.8 31.17519976854325Q 148.8 22.17519976854325 157.8 22.17519976854325L 154.20000000000002 22.17519976854325Q 163.20000000000002 22.17519976854325 163.20000000000002 31.17519976854325L 163.20000000000002 31.17519976854325L 163.20000000000002 79.70079907417298Q 163.20000000000002 88.70079907417298 154.20000000000002 88.70079907417298L 157.8 88.70079907417298Q 148.8 88.70079907417298 148.8 79.70079907417298z"
-                                                                                        fill="#696cff29"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="round"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-bar-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMaskpfwoyz54)"
-                                                                                        pathto="M 148.8 79.70079907417298L 148.8 31.17519976854325Q 148.8 22.17519976854325 157.8 22.17519976854325L 154.20000000000002 22.17519976854325Q 163.20000000000002 22.17519976854325 163.20000000000002 31.17519976854325L 163.20000000000002 31.17519976854325L 163.20000000000002 79.70079907417298Q 163.20000000000002 88.70079907417298 154.20000000000002 88.70079907417298L 157.8 88.70079907417298Q 148.8 88.70079907417298 148.8 79.70079907417298z"
-                                                                                        pathfrom="M 148.8 79.70079907417298L 148.8 79.70079907417298L 163.20000000000002 79.70079907417298L 163.20000000000002 79.70079907417298L 163.20000000000002 79.70079907417298L 163.20000000000002 79.70079907417298L 163.20000000000002 79.70079907417298L 148.8 79.70079907417298"
-                                                                                        cy="22.17519976854325"
-                                                                                        cx="172.8"
-                                                                                        j={6}
-                                                                                        val={75}
-                                                                                        barheight="66.52559930562973"
-                                                                                        barwidth="14.4"
-                                                                                    />
-                                                                                    <g
-                                                                                        id="SvgjsG2446"
-                                                                                        className="apexcharts-bar-goals-markers"
-                                                                                        style={{ pointerEvents: "none" }}
-                                                                                    >
-                                                                                        <g
-                                                                                            id="SvgjsG2447"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2449"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2451"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2453"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2455"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2457"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                        <g
-                                                                                            id="SvgjsG2459"
-                                                                                            classname="apexcharts-bar-goals-groups"
-                                                                                        />
-                                                                                    </g>
-                                                                                </g>
-                                                                                <g
-                                                                                    id="SvgjsG2445"
-                                                                                    className="apexcharts-datalabels"
-                                                                                    data-realindex={0}
-                                                                                />
-                                                                            </g>
-                                                                            <line
-                                                                                id="SvgjsLine2497"
-                                                                                x1={0}
-                                                                                y1={0}
-                                                                                x2={168}
-                                                                                y2={0}
-                                                                                stroke="#b6b6b6"
-                                                                                strokeDasharray={0}
-                                                                                strokeWidth={1}
-                                                                                strokeLinecap="butt"
-                                                                                className="apexcharts-ycrosshairs"
-                                                                            />
-                                                                            <line
-                                                                                id="SvgjsLine2498"
-                                                                                x1={0}
-                                                                                y1={0}
-                                                                                x2={168}
-                                                                                y2={0}
-                                                                                strokeDasharray={0}
-                                                                                strokeWidth={0}
-                                                                                strokeLinecap="butt"
-                                                                                className="apexcharts-ycrosshairs-hidden"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2499"
-                                                                                className="apexcharts-yaxis-annotations"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2500"
-                                                                                className="apexcharts-xaxis-annotations"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2501"
-                                                                                className="apexcharts-point-annotations"
-                                                                            />
-                                                                        </g>
-                                                                        <g
-                                                                            id="SvgjsG2484"
-                                                                            className="apexcharts-yaxis"
-                                                                            rel={0}
-                                                                            transform="translate(-8, 0)"
-                                                                        >
-                                                                            <g
-                                                                                id="SvgjsG2485"
-                                                                                className="apexcharts-yaxis-texts-g"
-                                                                            />
-                                                                        </g>
-                                                                        <g
-                                                                            id="SvgjsG2434"
-                                                                            className="apexcharts-annotations"
-                                                                        />
-                                                                    </svg>
-                                                                    <div
-                                                                        className="apexcharts-legend"
-                                                                        style={{ maxHeight: 60 }}
-                                                                    />
-                                                                    <div className="apexcharts-tooltip apexcharts-theme-light">
-                                                                        <div
-                                                                            className="apexcharts-tooltip-title"
-                                                                            style={{
-                                                                                fontFamily: "Helvetica, Arial, sans-serif",
-                                                                                fontSize: 12
-                                                                            }}
-                                                                        />
-                                                                        <div
-                                                                            className="apexcharts-tooltip-series-group"
-                                                                            style={{ order: 1 }}
-                                                                        >
-                                                                            <span
-                                                                                className="apexcharts-tooltip-marker"
-                                                                                style={{
-                                                                                    backgroundColor: "rgba(105, 108, 255, 0.16)"
-                                                                                }}
-                                                                            />
-                                                                            <div
-                                                                                className="apexcharts-tooltip-text"
-                                                                                style={{
-                                                                                    fontFamily: "Helvetica, Arial, sans-serif",
-                                                                                    fontSize: 12
-                                                                                }}
-                                                                            >
-                                                                                <div className="apexcharts-tooltip-y-group">
-                                                                                    <span className="apexcharts-tooltip-text-y-label" />
-                                                                                    <span className="apexcharts-tooltip-text-y-value" />
-                                                                                </div>
-                                                                                <div className="apexcharts-tooltip-goals-group">
-                                                                                    <span className="apexcharts-tooltip-text-goals-label" />
-                                                                                    <span className="apexcharts-tooltip-text-goals-value" />
-                                                                                </div>
-                                                                                <div className="apexcharts-tooltip-z-group">
-                                                                                    <span className="apexcharts-tooltip-text-z-label" />
-                                                                                    <span className="apexcharts-tooltip-text-z-value" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="apexcharts-yaxistooltip apexcharts-yaxistooltip-0 apexcharts-yaxistooltip-left apexcharts-theme-light">
-                                                                        <div className="apexcharts-yaxistooltip-text" />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="resize-triggers">
-                                                                <div className="expand-trigger">
-                                                                    <div style={{ width: 327, height: 121 }} />
-                                                                </div>
-                                                                <div className="contract-trigger" />
+                                                            <div>
+                                                                <h3>Total Amount</h3>
+                                                                {chartData.labels.length > 0 ? (
+        <Line data={lineChartData} options={lineChartOptions} />
+      ) : (
+        <p>Loading line chart...</p>
+      )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1097,582 +573,27 @@ const Commerce = () => {
                                                 <div className="col-md-6">
                                                     <div className="p-6">
                                                         <div className="card-title d-flex align-items-start justify-content-between">
-                                                            <h5 className="mb-0">Activity</h5>
-                                                            <small>Last Week</small>
+                                                           
                                                         </div>
                                                         <div
                                                             className="d-flex justify-content-between"
                                                             style={{ position: "relative" }}
                                                         >
-                                                            <div className="mt-auto">
-                                                                <h3 className="mb-1">82%</h3>
-                                                                <small className="text-success text-nowrap fw-medium">
-                                                                    <i className="bx bx-up-arrow-alt" /> 24.8%
-                                                                </small>
-                                                            </div>
+                                                            
                                                             <div id="activityChart" style={{ minHeight: 120 }}>
                                                                 <div
                                                                     id="apexcharts90pj98cf"
                                                                     className="apexcharts-canvas apexcharts90pj98cf apexcharts-theme-light"
-                                                                    style={{ width: 220, height: 120 }}
+                                                                    style={{ width: 180, height: 300 }}
                                                                 >
-                                                                    <svg
-                                                                        id="SvgjsSvg2503"
-                                                                        width={220}
-                                                                        height={120}
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        version="1.1"
-                                                                        xmlnsXlink="http://www.w3.org/1999/xlink"
-
-                                                                        className="apexcharts-svg apexcharts-zoomable"
-                                                                        xmlns-data="ApexChartsNS"
-                                                                        transform="translate(0, 0)"
-                                                                        style={{ background: "transparent" }}
-                                                                    >
-                                                                        <g
-                                                                            id="SvgjsG2505"
-                                                                            className="apexcharts-inner apexcharts-graphical"
-                                                                            transform="translate(22, 10)"
-                                                                        >
-                                                                            <defs id="SvgjsDefs2504">
-                                                                                <clipPath id="gridRectMask90pj98cf">
-                                                                                    <rect
-                                                                                        id="SvgjsRect2510"
-                                                                                        width={194}
-                                                                                        height="81.70079907417298"
-                                                                                        x={-3}
-                                                                                        y={-1}
-                                                                                        rx={0}
-                                                                                        ry={0}
-                                                                                        opacity={1}
-                                                                                        strokeWidth={0}
-                                                                                        stroke="none"
-                                                                                        strokeDasharray={0}
-                                                                                        fill="#fff"
-                                                                                    />
-                                                                                </clipPath>
-                                                                                <clipPath id="forecastMask90pj98cf" />
-                                                                                <clipPath id="nonForecastMask90pj98cf" />
-                                                                                <clipPath id="gridRectMarkerMask90pj98cf">
-                                                                                    <rect
-                                                                                        id="SvgjsRect2511"
-                                                                                        width={192}
-                                                                                        height="83.70079907417298"
-                                                                                        x={-2}
-                                                                                        y={-2}
-                                                                                        rx={0}
-                                                                                        ry={0}
-                                                                                        opacity={1}
-                                                                                        strokeWidth={0}
-                                                                                        stroke="none"
-                                                                                        strokeDasharray={0}
-                                                                                        fill="#fff"
-                                                                                    />
-                                                                                </clipPath>
-                                                                                <linearGradient
-                                                                                    id="SvgjsLinearGradient2516"
-                                                                                    x1={0}
-                                                                                    y1={0}
-                                                                                    x2={0}
-                                                                                    y2={1}
-                                                                                >
-                                                                                    <stop
-                                                                                        id="SvgjsStop2517"
-                                                                                        stopOpacity="0.8"
-                                                                                        stopColor="rgba(113,221,55,0.8)"
-                                                                                        offset={0}
-                                                                                    />
-                                                                                    <stop
-                                                                                        id="SvgjsStop2518"
-                                                                                        stopOpacity="0.25"
-                                                                                        stopColor="rgba(227,248,215,0.25)"
-                                                                                        offset="0.85"
-                                                                                    />
-                                                                                    <stop
-                                                                                        id="SvgjsStop2519"
-                                                                                        stopOpacity="0.25"
-                                                                                        stopColor="rgba(227,248,215,0.25)"
-                                                                                        offset={1}
-                                                                                    />
-                                                                                </linearGradient>
-                                                                            </defs>
-                                                                            <line
-                                                                                id="SvgjsLine2509"
-                                                                                x1={0}
-                                                                                y1={0}
-                                                                                x2={0}
-                                                                                y2="79.70079907417298"
-                                                                                stroke="#b6b6b6"
-                                                                                strokeDasharray={3}
-                                                                                strokeLinecap="butt"
-                                                                                className="apexcharts-xcrosshairs"
-                                                                                x={0}
-                                                                                y={0}
-                                                                                width={1}
-                                                                                height="79.70079907417298"
-                                                                                fill="#b1b9c4"
-                                                                                filter="none"
-                                                                                fillOpacity="0.9"
-                                                                                strokeWidth={1}
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2522"
-                                                                                className="apexcharts-xaxis"
-                                                                                transform="translate(0, 0)"
-                                                                            >
-                                                                                <g
-                                                                                    id="SvgjsG2523"
-                                                                                    className="apexcharts-xaxis-texts-g"
-                                                                                    transform="translate(0, -4)"
-                                                                                >
-                                                                                    <text
-                                                                                        id="SvgjsText2525"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x={0}
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2526">Mo</tspan>
-                                                                                        <title>Mo</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2528"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="31.333333333333336"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2529">Tu</tspan>
-                                                                                        <title>Tu</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2531"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="62.666666666666664"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2532">We</tspan>
-                                                                                        <title>We</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2534"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="93.99999999999999"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2535">Th</tspan>
-                                                                                        <title>Th</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2537"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="125.33333333333333"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2538">Fr</tspan>
-                                                                                        <title>Fr</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2540"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="156.66666666666669"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2541">Sa</tspan>
-                                                                                        <title>Sa</title>
-                                                                                    </text>
-                                                                                    <text
-                                                                                        id="SvgjsText2543"
-                                                                                        fontFamily="Helvetica, Arial, sans-serif"
-                                                                                        x="188.00000000000003"
-                                                                                        y="108.70079907417298"
-                                                                                        textAnchor="middle"
-                                                                                        dominantBaseline="auto"
-                                                                                        fontSize="13px"
-                                                                                        fontWeight={400}
-                                                                                        fill="#a7acb2"
-                                                                                        className="apexcharts-text apexcharts-xaxis-label "
-                                                                                        style={{
-                                                                                            fontFamily: "Helvetica, Arial, sans-serif"
-                                                                                        }}
-                                                                                    >
-                                                                                        <tspan id="SvgjsTspan2544">Su</tspan>
-                                                                                        <title>Su</title>
-                                                                                    </text>
-                                                                                </g>
-                                                                            </g>
-                                                                            <g id="SvgjsG2547" className="apexcharts-grid">
-                                                                                <g
-                                                                                    id="SvgjsG2548"
-                                                                                    className="apexcharts-gridlines-horizontal"
-                                                                                    style={{ display: "none" }}
-                                                                                >
-                                                                                    <line
-                                                                                        id="SvgjsLine2550"
-                                                                                        x1={0}
-                                                                                        y1={0}
-                                                                                        x2={188}
-                                                                                        y2={0}
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2551"
-                                                                                        x1={0}
-                                                                                        y1="15.940159814834596"
-                                                                                        x2={188}
-                                                                                        y2="15.940159814834596"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2552"
-                                                                                        x1={0}
-                                                                                        y1="31.88031962966919"
-                                                                                        x2={188}
-                                                                                        y2="31.88031962966919"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2553"
-                                                                                        x1={0}
-                                                                                        y1="47.82047944450379"
-                                                                                        x2={188}
-                                                                                        y2="47.82047944450379"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2554"
-                                                                                        x1={0}
-                                                                                        y1="63.76063925933838"
-                                                                                        x2={188}
-                                                                                        y2="63.76063925933838"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                    <line
-                                                                                        id="SvgjsLine2555"
-                                                                                        x1={0}
-                                                                                        y1="79.70079907417298"
-                                                                                        x2={188}
-                                                                                        y2="79.70079907417298"
-                                                                                        stroke="#e0e0e0"
-                                                                                        strokeDasharray={0}
-                                                                                        strokeLinecap="butt"
-                                                                                        className="apexcharts-gridline"
-                                                                                    />
-                                                                                </g>
-                                                                                <g
-                                                                                    id="SvgjsG2549"
-                                                                                    className="apexcharts-gridlines-vertical"
-                                                                                    style={{ display: "none" }}
-                                                                                />
-                                                                                <line
-                                                                                    id="SvgjsLine2557"
-                                                                                    x1={0}
-                                                                                    y1="79.70079907417298"
-                                                                                    x2={188}
-                                                                                    y2="79.70079907417298"
-                                                                                    stroke="transparent"
-                                                                                    strokeDasharray={0}
-                                                                                    strokeLinecap="butt"
-                                                                                />
-                                                                                <line
-                                                                                    id="SvgjsLine2556"
-                                                                                    x1={0}
-                                                                                    y1={1}
-                                                                                    x2={0}
-                                                                                    y2="79.70079907417298"
-                                                                                    stroke="transparent"
-                                                                                    strokeDasharray={0}
-                                                                                    strokeLinecap="butt"
-                                                                                />
-                                                                            </g>
-                                                                            <g
-                                                                                id="SvgjsG2512"
-                                                                                className="apexcharts-area-series apexcharts-plot-series"
-                                                                            >
-                                                                                <g
-                                                                                    id="SvgjsG2513"
-                                                                                    className="apexcharts-series"
-                                                                                    seriesname="seriesx1"
-                                                                                    data-longestseries="true"
-                                                                                    rel={1}
-                                                                                    data-realindex={0}
-                                                                                >
-                                                                                    <path
-                                                                                        id="SvgjsPath2520"
-                                                                                        d="M 0 79.70079907417298L 0 65.75315923619272C 10.966666666666667 65.75315923619272 20.366666666666667 51.80551939821244 31.333333333333336 51.80551939821244C 42.300000000000004 51.80551939821244 51.7 61.76811928248406 62.66666666666667 61.76811928248406C 73.63333333333334 61.76811928248406 83.03333333333335 15.940159814834601 94.00000000000001 15.940159814834601C 104.96666666666668 15.940159814834601 114.36666666666667 71.73071916675568 125.33333333333334 71.73071916675568C 136.3 71.73071916675568 145.70000000000002 25.902759699106213 156.66666666666669 25.902759699106213C 167.63333333333335 25.902759699106213 177.03333333333336 45.827959467649464 188.00000000000003 45.827959467649464C 188.00000000000003 45.827959467649464 188.00000000000003 45.827959467649464 188.00000000000003 79.70079907417298M 188.00000000000003 45.827959467649464z"
-                                                                                        fill="url(#SvgjsLinearGradient2516)"
-                                                                                        fillOpacity={1}
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="butt"
-                                                                                        strokeWidth={0}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMask90pj98cf)"
-                                                                                        pathto="M 0 79.70079907417298L 0 65.75315923619272C 10.966666666666667 65.75315923619272 20.366666666666667 51.80551939821244 31.333333333333336 51.80551939821244C 42.300000000000004 51.80551939821244 51.7 61.76811928248406 62.66666666666667 61.76811928248406C 73.63333333333334 61.76811928248406 83.03333333333335 15.940159814834601 94.00000000000001 15.940159814834601C 104.96666666666668 15.940159814834601 114.36666666666667 71.73071916675568 125.33333333333334 71.73071916675568C 136.3 71.73071916675568 145.70000000000002 25.902759699106213 156.66666666666669 25.902759699106213C 167.63333333333335 25.902759699106213 177.03333333333336 45.827959467649464 188.00000000000003 45.827959467649464C 188.00000000000003 45.827959467649464 188.00000000000003 45.827959467649464 188.00000000000003 79.70079907417298M 188.00000000000003 45.827959467649464z"
-                                                                                        pathfrom="M -1 95.64095888900758L -1 95.64095888900758L 31.333333333333336 95.64095888900758L 62.66666666666667 95.64095888900758L 94.00000000000001 95.64095888900758L 125.33333333333334 95.64095888900758L 156.66666666666669 95.64095888900758L 188.00000000000003 95.64095888900758"
-                                                                                    />
-                                                                                    <path
-                                                                                        id="SvgjsPath2521"
-                                                                                        d="M 0 65.75315923619272C 10.966666666666667 65.75315923619272 20.366666666666667 51.80551939821244 31.333333333333336 51.80551939821244C 42.300000000000004 51.80551939821244 51.7 61.76811928248406 62.66666666666667 61.76811928248406C 73.63333333333334 61.76811928248406 83.03333333333335 15.940159814834601 94.00000000000001 15.940159814834601C 104.96666666666668 15.940159814834601 114.36666666666667 71.73071916675568 125.33333333333334 71.73071916675568C 136.3 71.73071916675568 145.70000000000002 25.902759699106213 156.66666666666669 25.902759699106213C 167.63333333333335 25.902759699106213 177.03333333333336 45.827959467649464 188.00000000000003 45.827959467649464"
-                                                                                        fill="none"
-                                                                                        fillOpacity={1}
-                                                                                        stroke="#71dd37"
-                                                                                        strokeOpacity={1}
-                                                                                        strokeLinecap="butt"
-                                                                                        strokeWidth={2}
-                                                                                        strokeDasharray={0}
-                                                                                        className="apexcharts-area"
-                                                                                        index={0}
-                                                                                        clipPath="url(#gridRectMask90pj98cf)"
-                                                                                        pathto="M 0 65.75315923619272C 10.966666666666667 65.75315923619272 20.366666666666667 51.80551939821244 31.333333333333336 51.80551939821244C 42.300000000000004 51.80551939821244 51.7 61.76811928248406 62.66666666666667 61.76811928248406C 73.63333333333334 61.76811928248406 83.03333333333335 15.940159814834601 94.00000000000001 15.940159814834601C 104.96666666666668 15.940159814834601 114.36666666666667 71.73071916675568 125.33333333333334 71.73071916675568C 136.3 71.73071916675568 145.70000000000002 25.902759699106213 156.66666666666669 25.902759699106213C 167.63333333333335 25.902759699106213 177.03333333333336 45.827959467649464 188.00000000000003 45.827959467649464"
-                                                                                        pathfrom="M -1 95.64095888900758L -1 95.64095888900758L 31.333333333333336 95.64095888900758L 62.66666666666667 95.64095888900758L 94.00000000000001 95.64095888900758L 125.33333333333334 95.64095888900758L 156.66666666666669 95.64095888900758L 188.00000000000003 95.64095888900758"
-                                                                                    />
-                                                                                    <g
-                                                                                        id="SvgjsG2514"
-                                                                                        className="apexcharts-series-markers-wrap"
-                                                                                        data-realindex={0}
-                                                                                    >
-                                                                                        <g className="apexcharts-series-markers">
-                                                                                            <circle
-                                                                                                id="SvgjsCircle2563"
-                                                                                                r={0}
-                                                                                                cx={0}
-                                                                                                cy={0}
-                                                                                                className="apexcharts-marker w5l0x6x59 no-pointer-events"
-                                                                                                stroke="#ffffff"
-                                                                                                fill="#71dd37"
-                                                                                                fillOpacity={1}
-                                                                                                strokeWidth={2}
-                                                                                                strokeOpacity="0.9"
-                                                                                                default-marker-size={0}
-                                                                                            />
-                                                                                        </g>
-                                                                                    </g>
-                                                                                </g>
-                                                                                <g
-                                                                                    id="SvgjsG2515"
-                                                                                    className="apexcharts-datalabels"
-                                                                                    data-realindex={0}
-                                                                                />
-                                                                            </g>
-                                                                            <line
-                                                                                id="SvgjsLine2558"
-                                                                                x1={0}
-                                                                                y1={0}
-                                                                                x2={188}
-                                                                                y2={0}
-                                                                                stroke="#b6b6b6"
-                                                                                strokeDasharray={0}
-                                                                                strokeWidth={1}
-                                                                                strokeLinecap="butt"
-                                                                                className="apexcharts-ycrosshairs"
-                                                                            />
-                                                                            <line
-                                                                                id="SvgjsLine2559"
-                                                                                x1={0}
-                                                                                y1={0}
-                                                                                x2={188}
-                                                                                y2={0}
-                                                                                strokeDasharray={0}
-                                                                                strokeWidth={0}
-                                                                                strokeLinecap="butt"
-                                                                                className="apexcharts-ycrosshairs-hidden"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2560"
-                                                                                className="apexcharts-yaxis-annotations"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2561"
-                                                                                className="apexcharts-xaxis-annotations"
-                                                                            />
-                                                                            <g
-                                                                                id="SvgjsG2562"
-                                                                                className="apexcharts-point-annotations"
-                                                                            />
-                                                                            <rect
-                                                                                id="SvgjsRect2564"
-                                                                                width={0}
-                                                                                height={0}
-                                                                                x={0}
-                                                                                y={0}
-                                                                                rx={0}
-                                                                                ry={0}
-                                                                                opacity={1}
-                                                                                strokeWidth={0}
-                                                                                stroke="none"
-                                                                                strokeDasharray={0}
-                                                                                fill="#fefefe"
-                                                                                className="apexcharts-zoom-rect"
-                                                                            />
-                                                                            <rect
-                                                                                id="SvgjsRect2565"
-                                                                                width={0}
-                                                                                height={0}
-                                                                                x={0}
-                                                                                y={0}
-                                                                                rx={0}
-                                                                                ry={0}
-                                                                                opacity={1}
-                                                                                strokeWidth={0}
-                                                                                stroke="none"
-                                                                                strokeDasharray={0}
-                                                                                fill="#fefefe"
-                                                                                className="apexcharts-selection-rect"
-                                                                            />
-                                                                        </g>
-                                                                        <rect
-                                                                            id="SvgjsRect2508"
-                                                                            width={0}
-                                                                            height={0}
-                                                                            x={0}
-                                                                            y={0}
-                                                                            rx={0}
-                                                                            ry={0}
-                                                                            opacity={1}
-                                                                            strokeWidth={0}
-                                                                            stroke="none"
-                                                                            strokeDasharray={0}
-                                                                            fill="#fefefe"
-                                                                        />
-                                                                        <g
-                                                                            id="SvgjsG2545"
-                                                                            className="apexcharts-yaxis"
-                                                                            rel={0}
-                                                                            transform="translate(-8, 0)"
-                                                                        >
-                                                                            <g
-                                                                                id="SvgjsG2546"
-                                                                                className="apexcharts-yaxis-texts-g"
-                                                                            />
-                                                                        </g>
-                                                                        <g
-                                                                            id="SvgjsG2506"
-                                                                            className="apexcharts-annotations"
-                                                                        />
-                                                                    </svg>
-                                                                    <div
-                                                                        className="apexcharts-legend"
-                                                                        style={{ maxHeight: 60 }}
-                                                                    />
-                                                                    <div className="apexcharts-tooltip apexcharts-theme-light">
-                                                                        <div
-                                                                            className="apexcharts-tooltip-title"
-                                                                            style={{
-                                                                                fontFamily: "Helvetica, Arial, sans-serif",
-                                                                                fontSize: 12
-                                                                            }}
-                                                                        />
-                                                                        <div
-                                                                            className="apexcharts-tooltip-series-group"
-                                                                            style={{ order: 1 }}
-                                                                        >
-                                                                            <span
-                                                                                className="apexcharts-tooltip-marker"
-                                                                                style={{ backgroundColor: "rgb(113, 221, 55)" }}
-                                                                            />
-                                                                            <div
-                                                                                className="apexcharts-tooltip-text"
-                                                                                style={{
-                                                                                    fontFamily: "Helvetica, Arial, sans-serif",
-                                                                                    fontSize: 12
-                                                                                }}
-                                                                            >
-                                                                                <div className="apexcharts-tooltip-y-group">
-                                                                                    <span className="apexcharts-tooltip-text-y-label" />
-                                                                                    <span className="apexcharts-tooltip-text-y-value" />
-                                                                                </div>
-                                                                                <div className="apexcharts-tooltip-goals-group">
-                                                                                    <span className="apexcharts-tooltip-text-goals-label" />
-                                                                                    <span className="apexcharts-tooltip-text-goals-value" />
-                                                                                </div>
-                                                                                <div className="apexcharts-tooltip-z-group">
-                                                                                    <span className="apexcharts-tooltip-text-z-label" />
-                                                                                    <span className="apexcharts-tooltip-text-z-value" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="apexcharts-xaxistooltip apexcharts-xaxistooltip-bottom apexcharts-theme-light">
-                                                                        <div
-                                                                            className="apexcharts-xaxistooltip-text"
-                                                                            style={{
-                                                                                fontFamily: "Helvetica, Arial, sans-serif",
-                                                                                fontSize: 12
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="apexcharts-yaxistooltip apexcharts-yaxistooltip-0 apexcharts-yaxistooltip-left apexcharts-theme-light">
-                                                                        <div className="apexcharts-yaxistooltip-text" />
-                                                                    </div>
+                                                                    <h3>Total Status</h3>
+                                                                     {statusChartData.labels.length > 0 ? (
+        <Pie data={statusChartData} options={pieChartOptions} />
+      ) : (
+        <p>Loading pie chart...</p>
+      )}
+                                                                    
+                                                                    
                                                                 </div>
                                                             </div>
                                                             <div className="resize-triggers">
@@ -6234,425 +5155,7 @@ const Commerce = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="col-lg-7 col-xxl-8 mb-6 mb-lg-0">
-                                        <div className="card">
-                                            <div className="table-responsive text-nowrap">
-                                                <table className="table table-sm text-nowrap table-border-top-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Product</th>
-                                                            <th>Category</th>
-                                                            <th>Payment</th>
-                                                            <th>Order Status</th>
-                                                            <th>Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="table-border-bottom-0">
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/oneplus-lg.png"
-                                                                        alt="Oneplus"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">OnePlus 7Pro</h6>
-                                                                        <small className="text-body">OnePlus</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-mobile-alt bx-xs" />
-                                                                </span>{" "}
-                                                                Smart Phone
-                                                            </td>
-                                                            <td>
-                                                                <div className="text-body">
-                                                                    <span className="text-primary fw-medium">$120</span>/499
-                                                                </div>
-                                                                <small className="text-body">Partially Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary">Confirmed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/magic-mouse.png"
-                                                                        alt="Apple"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">Magic Mouse</h6>
-                                                                        <small className="text-body">Apple</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-warning rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-mouse bx-xs" />
-                                                                </span>{" "}
-                                                                Mouse
-                                                            </td>
-                                                            <td>
-                                                                <div>
-                                                                    <span className="text-primary fw-medium">$149</span>
-                                                                </div>
-                                                                <small className="text-body">Fully Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-success">Completed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/imac-pro.png"
-                                                                        alt="Apple"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">iMac Pro</h6>
-                                                                        <small className="text-body">Apple</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-info rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-desktop bx-xs" />
-                                                                </span>{" "}
-                                                                Computer
-                                                            </td>
-                                                            <td>
-                                                                <div className="text-body">
-                                                                    <span className="text-primary fw-medium">$0</span>/899
-                                                                </div>
-                                                                <small className="text-body">Unpaid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-danger">Cancelled</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/note10.png"
-                                                                        alt="Samsung"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">Note 10</h6>
-                                                                        <small className="text-body">Samsung</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-mobile-alt bx-xs" />
-                                                                </span>{" "}
-                                                                Smart Phone
-                                                            </td>
-                                                            <td>
-                                                                <div>
-                                                                    <span className="text-primary fw-medium">$149</span>
-                                                                </div>
-                                                                <small className="text-body">Fully Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-success">Completed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/iphone.png"
-                                                                        alt="Apple"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">iPhone 11 Pro</h6>
-                                                                        <small className="text-body">Apple</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-mobile-alt bx-xs" />
-                                                                </span>{" "}
-                                                                Smart Phone
-                                                            </td>
-                                                            <td>
-                                                                <div>
-                                                                    <span className="text-primary fw-medium">$399</span>
-                                                                </div>
-                                                                <small className="text-body">Fully Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-success">Completed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/mi-tv.png"
-                                                                        alt="Xiaomi"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">Mi LED TV 4X</h6>
-                                                                        <small className="text-body">Xiaomi</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-danger rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-tv bx-xs" />
-                                                                </span>{" "}
-                                                                Smart TV
-                                                            </td>
-                                                            <td>
-                                                                <div className="text-body">
-                                                                    <span className="text-primary fw-medium">$349</span>
-                                                                    /2499
-                                                                </div>
-                                                                <small className="text-body">Partially Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary">Confirmed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <img
-                                                                        src="../../assets/img/products/logitech-mx.png"
-                                                                        alt="Logitech"
-                                                                        height={32}
-                                                                        width={32}
-                                                                        className="me-3"
-                                                                    />
-                                                                    <div className="d-flex flex-column">
-                                                                        <h6 className="mb-0">Logitech MX</h6>
-                                                                        <small className="text-body">Logitech</small>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-warning rounded-pill p-1_5 me-3">
-                                                                    <i className="bx bx-mouse bx-xs" />
-                                                                </span>{" "}
-                                                                Mouse
-                                                            </td>
-                                                            <td>
-                                                                <div>
-                                                                    <span className="text-primary fw-medium">$89</span>
-                                                                </div>
-                                                                <small className="text-body">Fully Paid</small>
-                                                            </td>
-                                                            <td>
-                                                                <span className="badge bg-label-primary">Completed</span>
-                                                            </td>
-                                                            <td>
-                                                                <div className="dropdown">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn p-0 dropdown-toggle hide-arrow"
-                                                                        data-bs-toggle="dropdown"
-                                                                    >
-                                                                        <i className="bx bx-dots-vertical-rounded" />
-                                                                    </button>
-                                                                    <div className="dropdown-menu">
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-edit-alt me-1" /> View Details
-                                                                        </a>
-                                                                        <a
-                                                                            className="dropdown-item"
-                                                                            href="javascript:void(0);"
-                                                                        >
-                                                                            <i className="bx bx-trash me-1" /> Delete
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    
                                     {/* Total Balance */}
                                     <div className="col-lg-5 col-xxl-4">
                                         <div className="card h-100">
