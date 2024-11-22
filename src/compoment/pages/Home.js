@@ -4546,12 +4546,6 @@ const Home = () => {
             </div>
             {/* Content wrapper */}
           </div>
-
-
-
-
-
-
         </div>
 
       </div>

@@ -1,648 +1,125 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 const Oderdetails = () => {
+    const { orderId } = useParams();
+    const [orderDetails, setOrderDetails] = useState([]);
+    const [custOrder, setCustOrder] = useState(null);
+    const [restaurantName, setRestaurantName] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { order } = location.state || {};
-    const [orderDetails, setOrderDetails] = useState(order);
-    const [isConfirmed, setIsConfirmed] = useState(
-        order.status === 'Confirmed' || order.status === 'Picked up' || order.status === 'Dispatched'
-    );
-    const [isPickup, setIsPickUP] = useState(order.status === 'Pick up')
-    const [isDispatch, setDispatch] = useState(order.status === 'Dispatch')
-    const [isArrived, setArrived] = useState(order.status === 'Arrived')
-    const [isDenied, setIsDenied] = useState(false);
-    const [confirmationTime, setConfirmationTime] = useState(null);
-  
-    // Hàm xử lý toggle cho từng menu
-    const fetchProductDetails = async (productId) => {
+    // Định nghĩa hàm refreshOrderData
+    const refreshOrderData = async () => {
         try {
-            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Product/${productId}`);
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching product with ID ${productId}:`, error);
-        }
-    };
+            setLoading(true);
+            if (!orderId) throw new Error('Invalid order ID.');
 
-    const fetchColorDetails = async (colorId) => {
-        try {
-            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Color/${colorId}`);
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching color with ID ${colorId}:`, error);
-        }
-    };
+            // Gọi API để lấy danh sách order details
+            const orderResponse = await axios.get(
+                `https://t2305mpk320241031161932.azurewebsites.net/api/CustOrderDetail/by-order/${orderId}`
+            );
 
-    const fetchSizeDetails = async (sizeId) => {
-        try {
-            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Size/${sizeId}`);
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching size with ID ${sizeId}:`, error);
-        }
-    };
-    useEffect(() => {
-        const fetchDetailsForOrderItems = async () => {
-            if (order && order.orderItems.length > 0) {
-                const updatedOrderItems = await Promise.all(order.orderItems.map(async (item) => {
-                    const productDetails = await fetchProductDetails(item.variant.productId);
-                    const colorDetails = await fetchColorDetails(item.variant.colorId);
-                    const sizeDetails = await fetchSizeDetails(item.variant.sizeId);
+            if (orderResponse.data && orderResponse.data.length > 0) {
+                const details = await Promise.all(
+                    orderResponse.data.map(async (detail) => {
+                        const variantResponse = await axios.get(
+                            `https://t2305mpk320241031161932.azurewebsites.net/api/ItemVariants/${detail.variantId}`
+                        );
+                        return {
+                            ...detail,
+                            menuItemName: variantResponse.data?.menuItemName || 'Unknown Item',
+                            sizeNumber: variantResponse.data?.sizeNumber || 'N/A',
+                        };
+                    })
+                );
 
-                    return {
-                        ...item,
-                        variant: {
-                            ...item.variant,
-                            product: productDetails,
-                            color: colorDetails,
-                            size: sizeDetails,
-                        },
-                    };
-                }));
+                setOrderDetails(details);
+                const custOrderData = orderResponse.data[0].custOrder;
+                setCustOrder(custOrderData);
 
-                // Cập nhật state `orderDetails` với thông tin chi tiết mới
-                setOrderDetails({
-                    ...order,
-                    orderItems: updatedOrderItems,
-                });
-            }
-        };
-
-        fetchDetailsForOrderItems();
-    }, [order]);
-
-
-    const fetchOrderDetails = async () => {
-        try {
-            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${order.orderId}`);
-            setOrderDetails(response.data); // Cập nhật lại state với dữ liệu mới
-        } catch (error) {
-            console.error('Error fetching updated order:', error);
-        }
-    };
-    const handleConfirmOrder = async () => {
-        try {
-            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/confirm/${order.orderId}`);
-
-            if (response.status === 200 || response.status === 204) {
-                console.log('Order confirmed:', response.data);
-                alert('Order confirmed successfully!');
-                await fetchOrderDetails();
-                setIsConfirmed(true);
-                setConfirmationTime(new Date().toLocaleString());
-
-
+                if (custOrderData.restaurant_id) {
+                    const restaurantResponse = await axios.get(
+                        `https://t2305mpk320241031161932.azurewebsites.net/api/Restaurant/${custOrderData.restaurant_id}`
+                    );
+                    setRestaurantName(restaurantResponse.data?.restaurantName || 'Unknown');
+                } else {
+                    setRestaurantName('No restaurant assigned');
+                }
             } else {
-                console.error('Unexpected response:', response);
-                alert('Failed to confirm order.');
+                throw new Error('No order details found.');
             }
+        } catch (err) {
+            setError(err.message || 'Failed to fetch order details.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Sử dụng refreshOrderData trong useEffect
+    useEffect(() => {
+        refreshOrderData();
+    }, [orderId]);
+
+    // Sử dụng refreshOrderData trong confirmOrder
+    const confirmOrder = async () => {
+        try {
+            await axios.put(
+                `https://t2305mpk320241031161932.azurewebsites.net/api/CustOrder/${orderId}/approve`
+            );
+            await refreshOrderData(); // Gọi hàm refresh sau khi approve
+            alert('Order confirmed successfully!');
         } catch (error) {
-            console.error('Error confirming order:', error.response?.data || error.message);
+            console.error('Error confirming order:', error);
             alert('Failed to confirm order.');
         }
-
-
     };
-
-
-    // Hàm từ chối đơn hàng
-    const handleDenyOrder = async () => {
+    const prepareOrder = async () => {
         try {
-            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/deny/${order.orderId}`);
-            console.log('Order denied:', response.data);
-
-            if (response.status === 200 || response.status === 204) {
-                console.log('Order deny:', response.data);
-                alert('Order deny successfully!');
-                setIsDenied(true);
-
-                navigate('/Oderlist'); // Điều hướng đến trang OrderList sau khi xác nhận
-            } else {
-                console.error('Unexpected response:', response);
-                alert('Failed to confirm order.');
-            }
+            const response = await axios.put(
+                `https://t2305mpk320241031161932.azurewebsites.net/api/CustOrder/${custOrder.orderId}/prepare`
+            );
+            alert('Order status updated to Prepare.');
+            setCustOrder((prev) => ({ ...prev, status: "Prepare" })); // Cập nhật trạng thái trong state
         } catch (error) {
-            console.error('Error denying order:', error);
-            alert('Failed to deny order.');
+            console.error('Error updating order to Prepare:', error);
+            alert('Failed to update order status to Prepare.');
         }
     };
-    const handlePickupOrder = async () => {
+    const readyOrder = async () => {
         try {
-            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/pickUp/${order.orderId}`);
-            console.log('Pick UP:', response.data);
-
-            if (response.status === 200 || response.status === 204) {
-                console.log('Order deny:', response.data);
-                alert('Order PIck UP successfully!');
-                setIsPickUP(true);
-
-            } else {
-                console.error('Unexpected response:', response);
-                alert('Failed to confirm order.');
-            }
+            const response = await axios.put(
+                `https://t2305mpk320241031161932.azurewebsites.net/api/CustOrder/${custOrder.orderId}/ready`
+            );
+            alert('Order status updated to Ready.');
+            setCustOrder((prev) => ({ ...prev, status: "Ready" })); // Cập nhật trạng thái trong state
         } catch (error) {
-            console.error('Error denying order:', error);
-            alert('Failed to deny order.');
+            console.error('Error updating order to Ready:', error);
+            alert('Failed to update order status to Ready.');
         }
     };
-    const handledispatchOrder = async () => {
-        try {
-            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/dispatch/${order.orderId}`);
-            console.log('dispatch:', response.data);
-
-            if (response.status === 200 || response.status === 204) {
-                console.log('Order deny:', response.data);
-                alert('Order dispatch successfully!');
-                setDispatch(true);
-
-            } else {
-                console.error('Unexpected response:', response);
-                alert('Failed to confirm order.');
-            }
-        } catch (error) {
-            console.error('Error denying order:', error);
-            alert('Failed to deny order.');
-        }
-    };
-
-    const handleArriveOrder = async () => {
-        try {
-            const response = await axios.post(`https://projectky320240926105522.azurewebsites.net/api/Order/arrive/${order.orderId}`);
-            console.log('Package:', response.data);
-
-            if (response.status === 200 || response.status === 204) {
-                console.log('Order Package:', response.data);
-                alert('Order dispatch successfully!');
-                setArrived(true);
-
-            } else {
-                console.error('Unexpected response:', response);
-                alert('Failed to Package order.');
-            }
-        } catch (error) {
-            console.error('Error Package order:', error);
-            alert('Failed to Package order.');
-        }
-    };
-    useEffect(() => {
-        // Kiểm tra trạng thái đơn hàng khi trang được render
-        if (order.status) {
-            setIsConfirmed(order.status === 'Confirmed' || order.status === 'Picked up' || order.status === 'Dispatched' || order.status === 'Arrived');
-            setIsPickUP(order.status === 'Picked up' || order.status === 'Dispatched' || order.status === 'Arrived');
-            setDispatch(order.status === 'Dispatched' || order.status === 'Arrived');
-        }
-    }, [order.status]);
-
     
-      
-      
 
+    // Hiển thị trạng thái loading
+    if (loading) {
+        return <p>Loading...</p>;
+    }
 
+    // Hiển thị trạng thái lỗi
+    if (error) {
+        return <p>{error}</p>;
+    }
 
+    // Hiển thị nếu không có thông tin đơn hàng
+    if (!custOrder) {
+        return <p>No custOrder available.</p>;
+    }
 
-
-
-
-
-
-
-    const handleMenuToggle = (menuName) => {
-        setMenuState((prevState) => {
-            const newState = {
-                ...prevState,
-                [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
-            };
-            // Lưu trạng thái menu mới vào localStorage
-            localStorage.setItem('menuState', JSON.stringify(newState));
-            return newState;
-        });
-    };
-
-
-    // Hàm xử lý khi chấp nhận yêu cầu trả hàng
-    const handleApproveReturn = async (orderId) => {
-        try {
-            const response = await axios.post(
-                `https://projectky320240926105522.azurewebsites.net/api/Order/approveReturn/${orderId}`,
-                {},
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            if (response.status === 200 || response.status === 204) {
-                alert('Return request approved successfully!');
-                // Cập nhật trạng thái đơn hàng sau khi chấp nhận
-                fetchOrderById(orderId);
-                navigate('/Oderlist')
-            } else {
-                alert('Something went wrong while approving the return request!');
-            }
-        } catch (error) {
-            console.error('Error approving return request:', error.response?.data || error.message);
-            alert(`Error occurred while approving the return: ${error.response?.data?.message || error.message}`);
-        }
-    };
-
-    // Hàm xử lý khi từ chối yêu cầu trả hàng
-    const handleDenyReturn = async (orderId) => {
-        try {
-            const response = await axios.post(
-                `https://projectky320240926105522.azurewebsites.net/api/Order/denyReturn/${orderId}`,
-                {},
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            if (response.status === 200 || response.status === 204) {
-                alert('Return request denied successfully!');
-                // Cập nhật trạng thái đơn hàng sau khi từ chối
-                fetchOrderById(orderId);
-                navigate('/Oderlist')
-            } else {
-                alert('Something went wrong while denying the return request!');
-            }
-        } catch (error) {
-            console.error('Error denying return request:', error.response?.data || error.message);
-            alert(`Error occurred while denying the return: ${error.response?.data?.message || error.message}`);
-        }
-    };
-
-    // Hàm để lấy lại thông tin đơn hàng và kiểm tra trạng thái
-    const fetchOrderById = async (orderId) => {
-        try {
-            const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Order/${orderId}`);
-            console.log('Updated Order Data:', response.data);
-        } catch (error) {
-            console.error('Error fetching updated order:', error.response?.data || error.message);
-        }
-    };
-    const [returnReason, setReturnReason] = useState('');
-    const [returnId, setReturnId] = useState(null); // State để lưu returnId
-  
-    // Hàm lấy lý do trả hàng từ API qua Return ID
-    useEffect(() => {
-        const fetchData = async () => {
-          // Lấy Order ID từ dữ liệu orderDetails
-          const orderId = orderDetails.orderId; // Thay thế 33 bằng orderDetails.orderId
-          console.log(`Order ID being checked: ${orderId}`);
-      
-          // Lấy Return ID dựa trên Order ID
-          const returnId = await fetchReturnIdByOrderId(orderId);
-          console.log(`Return ID for Order ID ${orderId}: ${returnId}`);
-      
-          if (returnId) {
-            // Nếu Return ID tồn tại, lấy lý do trả hàng
-            await fetchReturnReason(returnId);
-          } else {
-            console.log(`No return request found for Order ID ${orderId}`);
-          }
-        };
-      
-        fetchData(); // Gọi hàm khi component render
-      }, [orderDetails.orderId]);
-      
-      const fetchReturnIdByOrderId = async (orderId) => {
-        try {
-          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Return/order/${orderId}`);
-          console.log('Response from API:', response.data);
-          
-          const returnData = response.data;
-          if (returnData && returnData.length > 0) {
-            console.log('Return Data:', returnData); // Kiểm tra dữ liệu trả về
-            return returnData[0].returnId; // Trả về Return ID đầu tiên nếu có
-          } else {
-            console.log('No return request found for this order.');
-            return null;
-          }
-        } catch (error) {
-          console.error('Error fetching Return ID by Order ID:', error);
-          return null;
-        }
-      };
-      
-      const fetchReturnReason = async (returnId) => {
-        try {
-          const response = await axios.get(`https://projectky320240926105522.azurewebsites.net/api/Return/${returnId}`);
-          console.log('Return Reason:', response.data.reason); // Kiểm tra lý do trả hàng
-          setReturnReason(response.data.reason); // Cập nhật lý do trả hàng vào state
-        } catch (error) {
-          if (error.response?.status === 404) {
-            console.error(`No return reason found for Return ID: ${returnId}`);
-            alert('No return reason found for this return request.');
-          } else {
-            console.error('Error fetching return reason:', error.response?.data || error.message);
-            alert(`Error occurred while fetching the return reason: ${error.response?.data?.message || error.message}`);
-          }
-        }
-      };
-      
-      
-      
-      
-      
-  
-      
-      
-      
-      
-
-
-
-
-
-    const menuRef = useRef(null);
-    const [menuState, setMenuState] = useState(() => {
-        // Lấy trạng thái menu từ localStorage hoặc sử dụng trạng thái mặc định nếu chưa lưu
-        const savedMenuState = localStorage.getItem('menuState');
-        return savedMenuState ? JSON.parse(savedMenuState) : {
-            dashboard: false,
-            layouts: false,
-            frontPages: false,
-            ecommerce: false,
-            settings: false,
-            order: false
-        };
-    });
-
-    useEffect(() => {
-        const menuInner = menuRef.current;
-
-        // Kiểm tra nếu nội dung vượt quá chiều cao của container
-        if (menuInner.scrollHeight > menuInner.clientHeight) {
-            menuInner.style.overflowY = 'auto';
-        } else {
-            menuInner.style.overflowY = 'hidden';
-        }
-
-        // Lấy vị trí cuộn từ localStorage và đặt lại
-        const savedScrollPosition = localStorage.getItem('menuScrollPosition');
-        if (savedScrollPosition) {
-            menuInner.scrollTop = parseInt(savedScrollPosition, 10);
-        }
-
-        // Lưu vị trí cuộn trước khi trang được tải lại
-        const handleBeforeUnload = () => {
-            localStorage.setItem('menuScrollPosition', menuInner.scrollTop);
-        };
-
-        const handleResize = () => {
-            if (menuInner.scrollHeight > menuInner.clientHeight) {
-                menuInner.style.overflowY = 'auto';
-            } else {
-                menuInner.style.overflowY = 'hidden';
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        // Cleanup event listener
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
     return (
         <div className="layout-wrapper layout-content-navbar">
             <div className="layout-container">
-                <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme" data-bg-class="bg-menu-theme">
-                    <div className="app-brand demo">
-                        <a href="index.html" className="app-brand-link">
-                            <span className="app-brand-logo demo">
-                                <svg
-                                    width={25}
-                                    viewBox="0 0 25 42"
-                                    version="1.1"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    xmlnsXlink="http://www.w3.org/1999/xlink"
-                                >
-                                    <defs>
-                                        <path
-                                            d="M13.7918663,0.358365126 L3.39788168,7.44174259 C0.566865006,9.69408886 -0.379795268,12.4788597 0.557900856,15.7960551 C0.68998853,16.2305145 1.09562888,17.7872135 3.12357076,19.2293357 C3.8146334,19.7207684 5.32369333,20.3834223 7.65075054,21.2172976 L7.59773219,21.2525164 L2.63468769,24.5493413 C0.445452254,26.3002124 0.0884951797,28.5083815 1.56381646,31.1738486 C2.83770406,32.8170431 5.20850219,33.2640127 7.09180128,32.5391577 C8.347334,32.0559211 11.4559176,30.0011079 16.4175519,26.3747182 C18.0338572,24.4997857 18.6973423,22.4544883 18.4080071,20.2388261 C17.963753,17.5346866 16.1776345,15.5799961 13.0496516,14.3747546 L10.9194936,13.4715819 L18.6192054,7.984237 L13.7918663,0.358365126 Z"
-                                            id="path-1"
-                                        />
-                                        <path
-                                            d="M5.47320593,6.00457225 C4.05321814,8.216144 4.36334763,10.0722806 6.40359441,11.5729822 C8.61520715,12.571656 10.0999176,13.2171421 10.8577257,13.5094407 L15.5088241,14.433041 L18.6192054,7.984237 C15.5364148,3.11535317 13.9273018,0.573395879 13.7918663,0.358365126 C13.5790555,0.511491653 10.8061687,2.3935607 5.47320593,6.00457225 Z"
-                                            id="path-3"
-                                        />
-                                        <path
-                                            d="M7.50063644,21.2294429 L12.3234468,23.3159332 C14.1688022,24.7579751 14.397098,26.4880487 13.008334,28.506154 C11.6195701,30.5242593 10.3099883,31.790241 9.07958868,32.3040991 C5.78142938,33.4346997 4.13234973,34 4.13234973,34 C4.13234973,34 2.75489982,33.0538207 2.37032616e-14,31.1614621 C-0.55822714,27.8186216 -0.55822714,26.0572515 -4.05231404e-15,25.8773518 C0.83734071,25.6075023 2.77988457,22.8248993 3.3049379,22.52991 C3.65497346,22.3332504 5.05353963,21.8997614 7.50063644,21.2294429 Z"
-                                            id="path-4"
-                                        />
-                                        <path
-                                            d="M20.6,7.13333333 L25.6,13.8 C26.2627417,14.6836556 26.0836556,15.9372583 25.2,16.6 C24.8538077,16.8596443 24.4327404,17 24,17 L14,17 C12.8954305,17 12,16.1045695 12,15 C12,14.5672596 12.1403557,14.1461923 12.4,13.8 L17.4,7.13333333 C18.0627417,6.24967773 19.3163444,6.07059163 20.2,6.73333333 C20.3516113,6.84704183 20.4862915,6.981722 20.6,7.13333333 Z"
-                                            id="path-5"
-                                        />
-                                    </defs>
-                                    <g
-                                        id="g-app-brand"
-                                        stroke="none"
-                                        strokeWidth={1}
-                                        fill="none"
-                                        fillRule="evenodd"
-                                    >
-                                        <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
-                                            <g id="Icon" transform="translate(27.000000, 15.000000)">
-                                                <g id="Mask" transform="translate(0.000000, 8.000000)">
-                                                    <mask id="mask-2" fill="white">
-                                                        <use xlinkHref="#path-1" />
-                                                    </mask>
-                                                    <use fill="#696cff" xlinkHref="#path-1" />
-                                                    <g id="Path-3" mask="url(#mask-2)">
-                                                        <use fill="#696cff" xlinkHref="#path-3" />
-                                                        <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-3" />
-                                                    </g>
-                                                    <g id="Path-4" mask="url(#mask-2)">
-                                                        <use fill="#696cff" xlinkHref="#path-4" />
-                                                        <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-4" />
-                                                    </g>
-                                                </g>
-                                                <g
-                                                    id="Triangle"
-                                                    transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
-                                                >
-                                                    <use fill="#696cff" xlinkHref="#path-5" />
-                                                    <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-5" />
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </g>
-                                </svg>
-                            </span>
-                            <span className="app-brand-text demo menu-text fw-bold ms-2">sneat</span>
-                        </a>
 
-                        <a href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
-                            <i className="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
-                        </a>
-                    </div>
-
-                    <div className="menu-inner-shadow" style={{ display: "none" }}></div>
-
-                    {/* Menu Inner */}
-                    <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-                        <li className={`menu-item ${menuState.dashboard ? 'open' : ''}`}>
-                            <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('dashboard'); }}>
-                                <i className="menu-icon tf-icons bx bx-home-smile"></i>
-                                <div className="text-truncate" data-i18n="Dashboards">Dashboards</div>
-                                <span className="badge rounded-pill bg-danger ms-auto">5</span>
-                            </a>
-                            <ul className="menu-sub">
-                                <li className="menu-item">
-                                    <a href="index.html" className="menu-link">
-                                        <div className="text-truncate" data-i18n="Analytics">Analytics</div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a href="https://demos.themeselection.com" target="_blank" className="menu-link">
-                                        <div className="text-truncate" data-i18n="CRM">CRM</div>
-                                    </a>
-                                </li>
-                                <li className="menu-item active">
-                                    <a
-                                        href="/Commerce"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="eCommerce">
-                                            eCommerce
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a
-                                        href="https://demos.themeselection.com/sneat-bootstrap-html-admin-template/html/vertical-menu-template/app-logistics-dashboard.html"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="Logistics">
-                                            Logistics
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className="menu-item">
-                                    <a
-                                        href="app-academy-dashboard.html"
-                                        target="_blank"
-                                        className="menu-link"
-                                    >
-                                        <div className="text-truncate" data-i18n="Academy">
-                                            Academy
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
-                            <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
-                                <i className="menu-icon tf-icons bx bx-cart-alt" />
-                                <div className="text-truncate" data-i18n="eCommerce">
-                                    eCommerce
-                                </div>
-                            </a>
-                            <ul className="menu-sub">
-                                <li className="menu-item">
-                                    <a href="/Commerce" className="menu-link">
-                                        <div className="text-truncate" data-i18n="Dashboard">
-                                            Dashboard
-                                        </div>
-                                    </a>
-                                </li>
-                                <li className={`menu-item ${menuState.frontPages ? 'open' : ''}`}>
-                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('frontPages'); }}>
-                                        <div className="text-truncate" data-i18n="Products">
-                                            Products
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item">
-                                            <a href="/Product" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Product List">
-                                                    Product List
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item ">
-                                            <a href="/Addproduct" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Add Product">
-                                                    Add Product
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item">
-                                            <a href="/Catenorylist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Category List">
-                                                    Category List
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item ">
-                                            <a href="/Brandlist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Category List">
-                                                    Brand List
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
-                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('order'); }}>
-                                        <div className="text-truncate" data-i18n="Order">
-                                            Order
-                                        </div>
-                                    </a>
-                                    <ul className="menu-sub">
-                                        <li className="menu-item ">
-                                            <a href="/Oderlist" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Order List">
-                                                    Order List
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li className="menu-item active">
-                                            <a href="/Oderdetails" className="menu-link">
-                                                <div className="text-truncate" data-i18n="Order Details">
-                                                    Order Details
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-item">
-                                    <a href="app-ecommerce-manage-reviews.html" className="menu-link">
-                                        <div className="text-truncate" data-i18n="Manage Reviews">
-                                            Manage Reviews
-                                        </div>
-                                    </a>
-                                </li>
-
-                            </ul>
-                        </li>
-
-
-                        <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                            <div className="ps__thumb-x" tabIndex={0} style={{ left: 0, width: 0 }} />
-                        </div>
-                        <div className="ps__rail-y" style={{ top: 0, height: 254, right: 4 }}>
-                            <div
-                                className="ps__thumb-y"
-                                tabIndex={0}
-                                style={{ top: 0, height: 44 }}
-                            />
-                        </div>
-                    </ul>
-                </aside>
                 <div className="layout-page">
                     {/* Navbar */}
                     <nav
@@ -793,7 +270,17 @@ const Oderdetails = () => {
                                                                 aria-label="products"
                                                                 _mstaria-label={120744}
                                                             >
-                                                                products
+                                                                Name
+                                                            </th>
+                                                            <th
+                                                                className="w-25 sorting_disabled"
+                                                                rowSpan={1}
+                                                                colSpan={1}
+                                                                style={{ width: 156 }}
+                                                                aria-label="price"
+                                                                _mstaria-label={61646}
+                                                            >
+                                                                Category
                                                             </th>
                                                             <th
                                                                 className="w-25 sorting_disabled"
@@ -813,75 +300,48 @@ const Oderdetails = () => {
                                                                 aria-label="qty"
                                                                 _mstaria-label={36504}
                                                             >
-                                                                qty
+                                                                Size
                                                             </th>
-                                                            <th
-                                                                className="sorting_disabled"
-                                                                rowSpan={1}
-                                                                colSpan={1}
-                                                                style={{ width: 42 }}
-                                                                aria-label="total"
-                                                                _mstaria-label={63726}
-                                                            >
-                                                                total
-                                                            </th>
+
+
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
-                                                            orderDetails.orderItems.map((item) => (
-                                                                <tr className="odd" key={item.orderItemId}>
-                                                                    <td className="control" tabIndex={0} style={{ display: "none" }} />
-                                                                    <td className="dt-checkboxes-cell">
-                                                                        <input type="checkbox" className="dt-checkboxes form-check-input" />
-                                                                    </td>
-                                                                    <td className="sorting_1">
-                                                                        <div className="d-flex justify-content-start align-items-center text-nowrap">
-                                                                            <div className="avatar-wrapper">
-                                                                                <div className="avatar avatar-sm me-3">
+                                                        {orderDetails.map((detail, index) => (
+                                                            <tr className="odd" key={index}>
+                                                                <td className="dt-checkboxes-cell">
+                                                                    <input type="checkbox" className="dt-checkboxes form-check-input" />
+                                                                </td>
+                                                                <td className="sorting_1">
+                                                                    <div className="d-flex justify-content-start align-items-center text-nowrap">
+                                                                        <div className="avatar-wrapper">
 
-
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="d-flex flex-column">
-                                                                                {/* Hiển thị tên sản phẩm */}
-                                                                                <h6 className="text-heading mb-0">
-                                                                                    {item.variant.product ? item.variant.product.name : 'Product Name'}
-                                                                                </h6>
-                                                                                <small>
-                                                                                    {item.variant && (
-                                                                                        <>
-                                                                                            {/* Hiển thị tên màu sắc */}
-                                                                                            <span>Color: {item.variant.color ? item.variant.color.colorName : 'Color Name'}</span>
-                                                                                            <span> & </span>
-                                                                                            <span>Size: {item.variant.size ? item.variant.size.sizeName : 'Size Name'}</span>
-                                                                                        </>
-                                                                                    )}
-                                                                                </small>
-                                                                            </div>
                                                                         </div>
-                                                                    </td>
-                                                                    {/* Hiển thị giá sản phẩm */}
-                                                                    <td>
-                                                                        <span>${item.price}</span>
-                                                                    </td>
-                                                                    {/* Hiển thị số lượng */}
-                                                                    <td>
-                                                                        <span>{item.quantity}</span>
-                                                                    </td>
-                                                                    {/* Hiển thị tổng giá tiền */}
-                                                                    <td>
-                                                                        <span className="text-body">${(item.price * item.quantity).toFixed(2)}</span>
+                                                                        <div className="d-flex flex-column">
+                                                                            {/* Hiển thị tên danh mục */}
+                                                                            <h6 className="text-heading mb-0">
+                                                                                {detail.menuItemName}
+                                                                            </h6>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td> {detail.category?.categoryName || 'Unknown'}</td>
 
-                                                                    </td>
-                                                                </tr>
-                                                            ))
-                                                        ) : (
-                                                            <tr>
-                                                                <td colSpan="6">No order items available.</td>
+                                                                <td>${detail.price || 'N/A'}</td>
+                                                                <td>{detail.sizeNumber}</td> {/* Hiển thị sizeNumber */}
+
+                                                                {/* Hiển thị số lượng bàn */}
+                                                                <td>
+
+                                                                </td>
+                                                                {/* Hiển thị tổng giá */}
+                                                                <td>
+
+                                                                </td>
                                                             </tr>
-                                                        )}
+                                                        ))}
                                                     </tbody>
+
 
 
                                                 </table>
@@ -892,8 +352,18 @@ const Oderdetails = () => {
                                                 <div className="order-calculations">
                                                     <div className="d-flex justify-content-start">
                                                         <h6 className="w-px-100 mb-0">Total:</h6>
-                                                        <h6 className="mb-0">${order.totalAmount}</h6>
+                                                        <h6 className="mb-0">${custOrder?.totalCost || 'N/A'}</h6>
+
                                                     </div>
+                                                    <div className="d-flex justify-content-start">
+
+                                                        <h6 className="w-px-100 mb-0">DepositCost:</h6>
+                                                        <h6 className="mb-0">${custOrder?.depositCost || 'N/A'}</h6>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
+
                                                 </div>
 
 
@@ -901,7 +371,7 @@ const Oderdetails = () => {
 
                                         </div>
                                         <div>
-     </div> {/* <h4>Order ID: {orderDetails.orderId}</h4>
+                                        </div> {/* <h4>Order ID: {orderDetails.orderId}</h4>
       <p>Status: {orderDetails.status}</p>
       {returnId ? (
         <div>
@@ -912,207 +382,148 @@ const Oderdetails = () => {
         <p>No return request found for this order.</p>
       )}
     </div> */}
-                                        {orderDetails.status === 'pending' && (
-                                            <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
-                                                <button onClick={handleConfirmOrder} className="btn btn-success">
-                                                    Confirm Order
-                                                </button>
-                                                <button onClick={handleDenyOrder} className="btn btn-danger">
-                                                    Deny Order
-                                                </button>
-                                            </div>
-                                        )}
-                                        {orderDetails.status === 'Return requested' && (
-                                           <div style={{ display: "flex", flexDirection: 'column', justifyContent: 'center', margin: '15px' }}>
-                                          <h4>Reason for Return</h4>
-<p>Reason for Return: {returnReason ? returnReason : 'Loading reason...'}</p>
 
-                                           <button onClick={() => handleApproveReturn(orderDetails.orderId)} className="btn btn-success">
-                                             Approve Return
-                                           </button>
-                                           <button onClick={() => handleDenyReturn(orderDetails.orderId)} className="btn btn-danger">
-                                             Deny Return
-                                           </button>
-                                         </div>
-                                        )}
-                                         
+{custOrder.status === "Pending" && (
+    <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
+        <button
+            className="btn btn-success"
+            onClick={confirmOrder} // Xác nhận đơn hàng
+        >
+            Confirm Order
+        </button>
+    </div>
+)}
+
+{custOrder.status === "Approved" && (
+    <div style={{ display: "flex", justifyContent: 'center', margin: '15px' }}>
+   
+        <button
+            className="btn btn-warning"
+            onClick={prepareOrder} // Chuyển trạng thái thành 'Prepare'
+        >
+            Prepare Order
+        </button>
+    </div>
+)}
+
+{custOrder.status === "Preparing" && (
+    <div style={{ display: "flex",textAlign:'center', margin: '15px', flexDirection:'column',alignItems:'center' }}>
+        <p>The order is being prepared.</p>
+        <button style={{width:'100px',height:'50px'}}
+            className="btn btn-primary"
+            onClick={readyOrder} // Chuyển trạng thái thành 'Ready'
+        >
+            Ready Order
+        </button>
+    </div>
+)}
+
+{custOrder.status === "Ready" && (
+    <p>The order is ready for delivery.</p>
+)}
+
+
+
+
+
 
                                     </div>
-                                    {isConfirmed && (
-                                        <div className="card mb-6">
-                                            <div className="card-header">
-                                                <h5 className="card-title m-0">Shipping activity</h5>
-                                            </div>
-                                            <div className="card-body pt-1">
-                                                <ul className="timeline pb-0 mb-0">
-                                                    <li className="timeline-item timeline-item-transparent border-primary">
-                                                        <span className="timeline-point timeline-point-primary" />
-                                                        <div className="timeline-event">
-                                                            <div className="timeline-header">
-                                                                <h6 className="mb-0">
-                                                                    Order was placed (Order ID: #{order.orderId})
-                                                                </h6>
-                                                                <small className="text-muted">Confirmed at:{confirmationTime}</small>
 
-                                                                {/* Nếu chưa được pick-up, hiển thị nút pick-up */}
-                                                                {!isPickup && <small><button onClick={handlePickupOrder} className="btn btn-success">Confirm Pick-Up</button></small>}
-                                                            </div>
-                                                            <p className="mt-3">
-                                                                Your order has been placed successfully
-                                                            </p>
-                                                        </div>
-                                                    </li>
-
-                                                    {/* Kiểm tra và hiển thị bước pick-up */}
-                                                    {isPickup && (
-                                                        <li className="timeline-item timeline-item-transparent border-primary">
-                                                            <span className="timeline-point timeline-point-primary" />
-                                                            <div className="timeline-event">
-                                                                <div className="timeline-header">
-                                                                    <h6 className="mb-0">Pick-up</h6>
-                                                                    <small className="text-muted">{confirmationTime}</small>
-
-                                                                    {/* Nếu chưa được dispatch, hiển thị nút dispatch */}
-                                                                    {!isDispatch && <small><button onClick={handledispatchOrder} className="btn btn-success">Dispatch Order</button></small>}
-                                                                </div>
-                                                                <p className="mt-3 mb-3">Pick-up scheduled with courier</p>
-                                                            </div>
-                                                        </li>
-                                                    )}
-
-                                                    {/* Kiểm tra và hiển thị bước dispatch */}
-                                                    {isDispatch && (
-                                                        <li className="timeline-item timeline-item-transparent border-primary">
-                                                            <span className="timeline-point timeline-point-primary" />
-                                                            <div className="timeline-event">
-                                                                <div className="timeline-header">
-                                                                    <h6 className="mb-0">Dispatched</h6>
-                                                                    <small className="text-muted">{confirmationTime}</small>
-
-                                                                    {/* Nếu chưa được arrived, hiển thị nút arrived */}
-                                                                    {!isArrived && <small><button onClick={handleArriveOrder} className="btn btn-success">Arrive Order</button></small>}
-                                                                </div>
-                                                                <p className="mt-3 mb-3">
-                                                                    Item has been picked up by courier
-                                                                </p>
-                                                            </div>
-                                                        </li>
-                                                    )}
-
-                                                    {/* Kiểm tra và hiển thị bước arrived */}
-                                                    {isArrived && (
-                                                        <li className="timeline-item timeline-item-transparent border-primary">
-                                                            <span className="timeline-point timeline-point-primary" />
-                                                            <div className="timeline-event">
-                                                                <div className="timeline-header">
-                                                                    <h6 className="mb-0">Package Arrived</h6>
-                                                                    <small className="text-muted">Arrived at destination</small>
-                                                                </div>
-                                                                <p className="mt-3 mb-3">
-                                                                    Package has arrived at its destination.
-                                                                </p>
-                                                            </div>
-                                                        </li>
-                                                    )}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    )}
 
                                 </div>
 
-                                {order ? (
-                                    <div className="col-12 col-lg-4">
-                                        <div className="card mb-6">
-                                            <div className="card-header">
-                                                <h5 className="card-title m-0">Customer details</h5>
-                                            </div>
-                                            <div className="card-body">
-                                                <div className="d-flex justify-content-start align-items-center mb-6">
-                                                    <div className="avatar me-3">
-                                                    </div>
-                                                    <div className="d-flex flex-column">
-                                                        <a
-                                                            href="app-user-view-account.html"
-                                                            className="text-body text-nowrap"
-                                                        >
-                                                            <h6 className="mb-0">{order.name}</h6>
-                                                        </a>
-                                                        <span>{order.orderId}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="d-flex justify-content-start align-items-center mb-6">
-                                                    <span className="avatar rounded-circle bg-label-success me-3 d-flex align-items-center justify-content-center">
-                                                        <i className="bx bx-cart bx-lg" />
-                                                    </span>
-                                                    <h6 className="text-nowrap mb-0"></h6>
-                                                </div>
-                                                <div className="d-flex justify-content-between">
-                                                    <h6 className="mb-1">Contact info</h6>
-                                                    <h6 className="mb-1">
-                                                        <a
-                                                            href=" javascript:void(0)"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#editUser"
-                                                        >
-                                                            Edit
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <p className=" mb-1">Email:{order.email}</p>
-                                                <p className=" mb-0">Mobile: +1 (609) {order.telephone}</p>
-                                            </div>
+
+                                <div className="col-12 col-lg-4">
+                                    <div className="card mb-6">
+                                        <div className="card-header">
+                                            <h5 className="card-title m-0">Customer details</h5>
                                         </div>
-                                        <div className="card mb-6">
-                                            <div className="card-header d-flex justify-content-between">
-                                                <h5 className="card-title m-0">Shipping address</h5>
-                                                <h6 className="m-0">
+                                        <div className="card-body">
+                                            <div className="d-flex justify-content-start align-items-center mb-6">
+                                                <div className="avatar me-3">
+                                                </div>
+                                                <div className="d-flex flex-column">
+                                                    <a
+                                                        href="app-user-view-account.html"
+                                                        className="text-body text-nowrap"
+                                                    >
+                                                        <h6 className="mb-0"></h6>
+                                                    </a>
+                                                    <span></span>
+                                                </div>
+                                            </div>
+                                            <div className="d-flex justify-content-start align-items-center mb-6">
+                                                <span className="avatar rounded-circle bg-label-success me-3 d-flex align-items-center justify-content-center">
+                                                    <i className="bx bx-cart bx-lg" />
+                                                </span>
+                                                <h6 className="text-nowrap mb-0"></h6>
+                                            </div>
+                                            <div className="d-flex justify-content-between">
+                                                <h6 className="mb-1">Contact info</h6>
+                                                <h6 className="mb-1">
                                                     <a
                                                         href=" javascript:void(0)"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#addNewAddress"
+                                                        data-bs-target="#editUser"
                                                     >
                                                         Edit
                                                     </a>
                                                 </h6>
                                             </div>
-                                            <div className="card-body">
-                                                <p className="mb-0">
-                                                    {order.shippingAddress}<br />
-                                                    Latheronwheel <br />
-                                                    KW5 8NW,London <br />
-                                                    UK
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="card mb-6">
-                                            <div className="card-header d-flex justify-content-between pb-2">
-                                                <h5 className="card-title m-0">Billing address</h5>
-                                                <h6 className="m-0">
-                                                    <a
-                                                        href=" javascript:void(0)"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#addNewAddress"
-                                                    >
-                                                        Edit
-                                                    </a>
-                                                </h6>
-                                            </div>
-                                            <div className="card-body">
-                                                <p className="mb-6">
-                                                    {order.shippingAddress} <br />
-                                                    Latheronwheel <br />
-                                                    KW5 8NW,London <br />
-                                                    UK
-                                                </p>
-                                                {/* <h5 className="mb-1">Mastercard</h5>
-                                                <p className="mb-0">Card Number: ******4291</p> */}
-                                            </div>
+                                            <p className=" mb-1">Email:{custOrder?.email || 'N/A'}</p>
+                                            <p className=" mb-0">Mobile: {custOrder?.phone || 'N/A'} </p>
                                         </div>
                                     </div>
-                                ) : (
-                                    <p>No order details available.</p>
-                                )}
+                                    <div className="card mb-6">
+                                        <div className="card-header d-flex justify-content-between">
+                                            <h5 className="card-title m-0">Restaurant</h5>
+                                            <h6 className="m-0">
+                                                <a
+                                                    href=" javascript:void(0)"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addNewAddress"
+                                                >
+                                                    Edit
+                                                </a>
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            <p className="mb-0">
+                                                <br />
+                                                <p className=" mb-1">Tên Nhà Hàng: <td>{restaurantName}</td> </p>
+                                                <p className=" mb-1">Giờ Đặt: {custOrder?.eventTime || 'N/A'} </p>
+                                                UK
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="card mb-6">
+                                        <div className="card-header d-flex justify-content-between pb-2">
+                                            <h5 className="card-title m-0">Bàn Đặt và Note </h5>
+                                            <h6 className="m-0">
+                                                <a
+                                                    href=" javascript:void(0)"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addNewAddress"
+                                                >
+                                                    Edit
+                                                </a>
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            <p className="mb-6">
+                                                <br />
+
+                                                <p className=" mb-1">Số Người: {custOrder?.noOfPeople || 'N/A'} </p>
+                                                <p className=" mb-1">Số Bàn: {custOrder?.noOfTable || 'N/A'}</p>
+                                                <p className=" mb-1">Note: {custOrder?.orderNote || 'N/A'}</p>
+
+                                            </p>
+                                            {/* <h5 className="mb-1">Mastercard</h5>
+                                                <p className="mb-0">Card Number: ******4291</p> */}
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                             {/* Edit User Modal */}
                             <div

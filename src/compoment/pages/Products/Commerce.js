@@ -1,14 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Line, Pie } from 'react-chartjs-2';
-import { Chart, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, TimeScale, Title, Tooltip, Legend } from 'chart.js';
-import 'chartjs-adapter-date-fns';
+import {
+    Chart as ChartJS,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import axios from 'axios';
-import 'chartjs-adapter-date-fns';
 
 
-Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, TimeScale, Title, Tooltip, Legend);
 
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 
 
@@ -25,124 +30,6 @@ const Commerce = () => {
         // Đảm bảo các dropdown khác đóng lại khi mở dropdown này
         setNotificationDropdownOpen(false);
     };
-    const [chartData, setChartData] = useState({ labels: [], data: [] });
-  const [statusChartData, setStatusChartData] = useState({ labels: [], datasets: [] });
-  const [orders, setOrders] = useState([]);
-
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      try {
-        // Gọi API để lấy danh sách order
-        const ordersResponse = await axios.get('https://projectky320240926105522.azurewebsites.net/api/Order');
-        const orders = ordersResponse.data;
-
-        // Tạo một đối tượng để lưu trữ tổng số tiền theo ngày
-        const totalAmountByDate = {};
-
-        // Tạo một đối tượng để lưu trữ số lượng trạng thái đơn hàng
-        const statusCount = {};
-
-        // Tính tổng số tiền cho mỗi ngày và đếm số lượng từng trạng thái đơn hàng
-        orders.forEach(order => {
-          const orderDate = new Date(order.orderDate).toISOString().split('T')[0]; // Lấy ngày dạng 'YYYY-MM-DD'
-          if (totalAmountByDate[orderDate]) {
-            totalAmountByDate[orderDate] += order.totalAmount;
-          } else {
-            totalAmountByDate[orderDate] = order.totalAmount;
-          }
-
-          const status = order.status;
-          if (statusCount[status]) {
-            statusCount[status]++;
-          } else {
-            statusCount[status] = 1;
-          }
-        });
-
-        // Tạo mảng labels và data từ đối tượng tổng số tiền theo ngày
-        const labels = Object.keys(totalAmountByDate).sort(); // Danh sách ngày (được sắp xếp)
-        const data = labels.map(label => totalAmountByDate[label]); // Tổng tiền cho mỗi ngày
-
-        setChartData({ labels, data });
-
-        // Tạo mảng labels và datasets cho Pie Chart từ trạng thái đơn hàng
-        const statusLabels = Object.keys(statusCount);
-        const statusData = Object.values(statusCount);
-        setStatusChartData({
-          labels: statusLabels,
-          datasets: [
-            {
-              label: 'Order Status',
-              data: statusData,
-              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-              hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-            },
-          ],
-        });
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      }
-    };
-
-    fetchOrderData();
-  }, []);
-
-  // Dữ liệu cho Line Chart (Tổng tiền theo ngày)
-  const lineChartData = {
-    labels: chartData.labels,
-    datasets: [
-      {
-        label: 'Total Amount by Date',
-        data: chartData.data,
-        borderColor: 'rgba(75,192,192,1)',
-        backgroundColor: 'rgba(75,192,192,0.4)',
-        fill: false,
-      },
-    ],
-  };
-
-  // Cấu hình tùy chọn cho Line Chart
-  const lineChartOptions = {
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day', // Đơn vị thời gian
-        },
-        title: {
-          display: true,
-          text: 'Date',
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Total Amount',
-        },
-      },
-    },
-    responsive: true,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top',
-      },
-    },
-  };
-
-  // Cấu hình tùy chọn cho Pie Chart (Tỷ lệ trạng thái đơn hàng)
-  const pieChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-    },
-  };
-
-
-    
-
     // Toggle notification dropdown
     const toggleNotificationDropdown = () => {
         setNotificationDropdownOpen(!isNotificationDropdownOpen);
@@ -186,271 +73,176 @@ const Commerce = () => {
         View: false
     });
 
-
-
-    // Hàm xử lý toggle cho từng menu
-    const handleMenuToggle = (menuName) => {
-        setMenuState((prevState) => ({
-            ...prevState,
-            [menuName]: !prevState[menuName], // Đảo ngược trạng thái của menu được click
-        }));
-    };
-
+    const [chartData, setChartData] = useState(null); // Biểu đồ doanh thu
+    const [orderChartData, setOrderChartData] = useState(null); // Biểu đồ tổng số đơn hàng
+    const [view, setView] = useState("day"); // Chế độ hiển thị: 'day', 'week', 'month'
+    const [mostOrderedItem, setMostOrderedItem] = useState(null); // Món ăn được đặt nhiều nhất
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     useEffect(() => {
-        const menuInner = menuRef.current;
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(
+                    "https://t2305mpk320241031161932.azurewebsites.net/api/CustOrder"
+                );
+                const orders = response.data;
 
-        // Kiểm tra nếu nội dung vượt quá chiều cao của container
-        if (menuInner.scrollHeight > menuInner.clientHeight) {
-            menuInner.style.overflowY = 'auto';
-        } else {
-            menuInner.style.overflowY = 'hidden';
-        }
+                // Lấy dữ liệu cho biểu đồ doanh thu
+                const revenueData = processData(orders, view, "revenue");
+                setChartData({
+                    labels: revenueData.labels,
+                    datasets: [
+                        {
+                            label: "Revenue",
+                            data: revenueData.data,
+                            backgroundColor: "rgba(54, 162, 235, 0.6)",
+                        },
+                    ],
+                });
 
-        // Xử lý lại khi kích thước cửa sổ thay đổi
-        const handleResize = () => {
-            if (menuInner.scrollHeight > menuInner.clientHeight) {
-                menuInner.style.overflowY = 'auto';
-            } else {
-                menuInner.style.overflowY = 'hidden';
+                // Lấy dữ liệu cho biểu đồ tổng số đơn hàng
+                const orderData = processData(orders, view, "orders");
+                setOrderChartData({
+                    labels: orderData.labels,
+                    datasets: [
+                        {
+                            label: "Total Orders",
+                            data: orderData.data,
+                            backgroundColor: "rgba(255, 99, 132, 0.6)",
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error fetching orders:", error);
             }
         };
 
+        fetchData();
+    }, [view]);
 
-        window.addEventListener('resize', handleResize);
 
-        // Cleanup event listener
-        return () => {
-            window.removeEventListener('resize', handleResize);
+    // Hàm chung để xử lý dữ liệu
+    const processData = (orders, groupBy, type) => {
+        const groupedData = orders.reduce((acc, order) => {
+            let key;
+            const date = new Date(order.orderDate);
+
+            if (groupBy === "day") {
+                key = date.toISOString().split("T")[0]; // YYYY-MM-DD
+            } else if (groupBy === "week") {
+                const year = date.getFullYear();
+                key = `${year}-W${Math.ceil(
+                    (date.getDate() + new Date(year, date.getMonth(), 1).getDay()) / 7
+                )}`; // Tính tuần
+            } else if (groupBy === "month") {
+                key = `${date.getFullYear()}-${String(
+                    date.getMonth() + 1
+                ).padStart(2, "0")}`; // YYYY-MM
+            }
+
+            // Nhóm dữ liệu dựa trên type (Revenue hoặc Order Count)
+            if (type === "revenue") {
+                acc[key] = (acc[key] || 0) + order.totalCost; // Tổng doanh thu
+            } else if (type === "orders") {
+                acc[key] = (acc[key] || 0) + 1; // Tổng số đơn hàng
+            }
+
+            return acc;
+        }, {});
+
+        return {
+            labels: Object.keys(groupedData),
+            data: Object.values(groupedData),
+        };
+    };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+
+                // Lấy danh sách đơn hàng
+                const ordersResponse = await axios.get(
+                    "https://t2305mpk320241031161932.azurewebsites.net/api/CustOrder"
+                );
+                const orders = ordersResponse.data;
+
+                let allVariants = [];
+                for (const order of orders) {
+                    if (!order.orderId) continue;
+
+                    try {
+                        const orderDetailsResponse = await axios.get(
+                            `https://t2305mpk320241031161932.azurewebsites.net/api/CustOrderDetail/by-order/${order.orderId}`
+                        );
+                        const orderDetails = orderDetailsResponse.data;
+
+                        allVariants = allVariants.concat(
+                            orderDetails.map((detail) => detail.variantId)
+                        );
+                    } catch (error) {
+                        if (error.response && error.response.status === 404) {
+                            console.warn(`No details found for orderId ${order.orderId}`);
+                        } else {
+                            console.error(
+                                `Error fetching details for orderId ${order.orderId}:`,
+                                error
+                            );
+                        }
+                        continue;
+                    }
+                }
+
+                const variantCount = allVariants.reduce((acc, variantId) => {
+                    acc[variantId] = (acc[variantId] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const mostOrderedVariantId = Object.keys(variantCount).reduce((a, b) =>
+                    variantCount[a] > variantCount[b] ? a : b
+                );
+
+                // Lấy `menuItemNo` từ API `ItemVariants`
+                const variantResponse = await axios.get(
+                    `https://t2305mpk320241031161932.azurewebsites.net/api/ItemVariants/${mostOrderedVariantId}`
+                );
+                const { menuItemNo } = variantResponse.data;
+
+                // Lấy danh sách món ăn từ API `MenuItem/with-variants`
+                const menuItemsResponse = await axios.get(
+                    "https://t2305mpk320241031161932.azurewebsites.net/api/MenuItem/with-variants"
+                );
+                const menuItems = menuItemsResponse.data;
+
+                // Tìm món ăn tương ứng với `menuItemNo`
+                const menuItem = menuItems.find((item) => item.menuItemNo === menuItemNo);
+
+                if (menuItem) {
+                    setMostOrderedItem({
+                        name: menuItem.itemName,
+                        count: variantCount[mostOrderedVariantId],
+                        imageURL: menuItem.imageURL,
+                    });
+                } else {
+                    throw new Error("Menu item not found.");
+                }
+            } catch (error) {
+                console.error("Error fetching most ordered item with image:", error);
+                setError("Failed to fetch data.");
+            } finally {
+                setLoading(false);
+            }
         };
 
+        fetchData();
     }, []);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>{error}</p>;
     return (
         <div>
             <div className="layout-wrapper layout-content-navbar">
                 <div className="layout-container">
-                    <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme" data-bg-class="bg-menu-theme">
-                        <div className="app-brand demo">
-                            <a href="index.html" className="app-brand-link">
-                                <span className="app-brand-logo demo">
-                                    <svg
-                                        width={25}
-                                        viewBox="0 0 25 42"
-                                        version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        xmlnsXlink="http://www.w3.org/1999/xlink"
-                                    >
-                                        <defs>
-                                            <path
-                                                d="M13.7918663,0.358365126 L3.39788168,7.44174259 C0.566865006,9.69408886 -0.379795268,12.4788597 0.557900856,15.7960551 C0.68998853,16.2305145 1.09562888,17.7872135 3.12357076,19.2293357 C3.8146334,19.7207684 5.32369333,20.3834223 7.65075054,21.2172976 L7.59773219,21.2525164 L2.63468769,24.5493413 C0.445452254,26.3002124 0.0884951797,28.5083815 1.56381646,31.1738486 C2.83770406,32.8170431 5.20850219,33.2640127 7.09180128,32.5391577 C8.347334,32.0559211 11.4559176,30.0011079 16.4175519,26.3747182 C18.0338572,24.4997857 18.6973423,22.4544883 18.4080071,20.2388261 C17.963753,17.5346866 16.1776345,15.5799961 13.0496516,14.3747546 L10.9194936,13.4715819 L18.6192054,7.984237 L13.7918663,0.358365126 Z"
-                                                id="path-1"
-                                            />
-                                            <path
-                                                d="M5.47320593,6.00457225 C4.05321814,8.216144 4.36334763,10.0722806 6.40359441,11.5729822 C8.61520715,12.571656 10.0999176,13.2171421 10.8577257,13.5094407 L15.5088241,14.433041 L18.6192054,7.984237 C15.5364148,3.11535317 13.9273018,0.573395879 13.7918663,0.358365126 C13.5790555,0.511491653 10.8061687,2.3935607 5.47320593,6.00457225 Z"
-                                                id="path-3"
-                                            />
-                                            <path
-                                                d="M7.50063644,21.2294429 L12.3234468,23.3159332 C14.1688022,24.7579751 14.397098,26.4880487 13.008334,28.506154 C11.6195701,30.5242593 10.3099883,31.790241 9.07958868,32.3040991 C5.78142938,33.4346997 4.13234973,34 4.13234973,34 C4.13234973,34 2.75489982,33.0538207 2.37032616e-14,31.1614621 C-0.55822714,27.8186216 -0.55822714,26.0572515 -4.05231404e-15,25.8773518 C0.83734071,25.6075023 2.77988457,22.8248993 3.3049379,22.52991 C3.65497346,22.3332504 5.05353963,21.8997614 7.50063644,21.2294429 Z"
-                                                id="path-4"
-                                            />
-                                            <path
-                                                d="M20.6,7.13333333 L25.6,13.8 C26.2627417,14.6836556 26.0836556,15.9372583 25.2,16.6 C24.8538077,16.8596443 24.4327404,17 24,17 L14,17 C12.8954305,17 12,16.1045695 12,15 C12,14.5672596 12.1403557,14.1461923 12.4,13.8 L17.4,7.13333333 C18.0627417,6.24967773 19.3163444,6.07059163 20.2,6.73333333 C20.3516113,6.84704183 20.4862915,6.981722 20.6,7.13333333 Z"
-                                                id="path-5"
-                                            />
-                                        </defs>
-                                        <g
-                                            id="g-app-brand"
-                                            stroke="none"
-                                            strokeWidth={1}
-                                            fill="none"
-                                            fillRule="evenodd"
-                                        >
-                                            <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
-                                                <g id="Icon" transform="translate(27.000000, 15.000000)">
-                                                    <g id="Mask" transform="translate(0.000000, 8.000000)">
-                                                        <mask id="mask-2" fill="white">
-                                                            <use xlinkHref="#path-1" />
-                                                        </mask>
-                                                        <use fill="#696cff" xlinkHref="#path-1" />
-                                                        <g id="Path-3" mask="url(#mask-2)">
-                                                            <use fill="#696cff" xlinkHref="#path-3" />
-                                                            <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-3" />
-                                                        </g>
-                                                        <g id="Path-4" mask="url(#mask-2)">
-                                                            <use fill="#696cff" xlinkHref="#path-4" />
-                                                            <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-4" />
-                                                        </g>
-                                                    </g>
-                                                    <g
-                                                        id="Triangle"
-                                                        transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
-                                                    >
-                                                        <use fill="#696cff" xlinkHref="#path-5" />
-                                                        <use fillOpacity="0.2" fill="#FFFFFF" xlinkHref="#path-5" />
-                                                    </g>
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </span>
-                                <span className="app-brand-text demo menu-text fw-bold ms-2">sneat</span>
-                            </a>
 
-                            <a href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
-                                <i className="bx bx-chevron-left bx-sm d-flex align-items-center justify-content-center"></i>
-                            </a>
-                        </div>
-
-                        <div className="menu-inner-shadow" style={{ display: "none" }}></div>
-
-                        {/* Menu Inner */}
-                        <ul className="menu-inner py-1" ref={menuRef} style={{ maxHeight: "700px" }}>
-
-
-                            <li className={`menu-item ${menuState.ecommerce ? 'open' : ''}`}>
-                                <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('ecommerce'); }}>
-                                    <i className="menu-icon tf-icons bx bx-cart-alt" />
-                                    <div className="text-truncate" data-i18n="eCommerce">
-                                        eCommerce
-                                    </div>
-                                </a>
-                                <ul className="menu-sub">
-                                    <li className="menu-item active">
-                                        <a href="app-ecommerce-dashboard.html" className="menu-link">
-                                            <div className="text-truncate" data-i18n="Dashboard">
-                                                Dashboard
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li className={`menu-item ${menuState.frontPages ? 'open' : ''}`}>
-                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('frontPages'); }}>
-                                            <div className="text-truncate" data-i18n="Products">
-                                                Products
-                                            </div>
-                                        </a>
-                                        <ul className="menu-sub">
-                                            <li className="menu-item">
-                                                <a href="/Product" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Product List">
-                                                        Product List
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
-                                                <a href="/Addproduct" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Add Product">
-                                                        Add Product
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
-                                                <a href="/Editproduct" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Add Product">
-                                                        Edit Product
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
-                                                <a href="/Catenorylist" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Category List">
-                                                        Category List
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
-                                                <a href="/Brandlist" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Category List">
-                                                        Brand List
-                                                    </div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li className={`menu-item ${menuState.order ? 'open' : ''}`}>
-                                        <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('order'); }}>
-                                            <div className="text-truncate" data-i18n="Order">
-                                                Order
-                                            </div>
-                                        </a>
-                                        <ul className="menu-sub">
-                                            <li className="menu-item">
-                                                <a href="/Oderlist" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Order List">
-                                                        Order List
-                                                    </div>
-                                                </a>
-                                            </li>
-                                            <li className="menu-item">
-                                                <a href="/Oderdetails" className="menu-link">
-                                                    <div className="text-truncate" data-i18n="Order Details">
-                                                        Order Details
-                                                    </div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-
-                                </ul>
-                                <li className={`menu-item ${menuState.Users ? 'open' : ''}`}>
-                                    <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('Users'); }}>
-                                        <i class="menu-icon tf-icons bx bx-user"></i>
-                                        <div class="text-truncate" data-i18n="Users">Users</div>
-                                    </a>
-                                    <ul class="menu-sub">
-                                        <li class="menu-item active">
-                                            <a href="/Userlist" class="menu-link">
-                                                <div class="text-truncate" data-i18n="List">List</div>
-                                            </a>
-                                        </li>
-
-                                        <li className={`menu-item ${menuState.View ? 'open' : ''}`}>
-                                            <a href="#" className="menu-link menu-toggle" onClick={(e) => { e.preventDefault(); handleMenuToggle('View'); }}>
-                                                <div class="text-truncate" data-i18n="View">View</div>
-                                            </a>
-                                            <ul class="menu-sub">
-                                                <li class="menu-item">
-                                                    <a href="/UserAc" class="menu-link">
-                                                        <div class="text-truncate" data-i18n="Account">Account</div>
-                                                    </a>
-                                                </li>
-                                                <li class="menu-item">
-                                                    <a href="/Invoice" class="menu-link">
-                                                        <div class="text-truncate" data-i18n="Security">Invoice</div>
-                                                    </a>
-                                                </li>
-                                                {/* <li class="menu-item">
-                                                        <a href="app-user-view-billing.html" class="menu-link">
-                                                            <div class="text-truncate" data-i18n="Billing &amp; Plans">Billing &amp; Plans</div>
-                                                        </a>
-                                                    </li>
-                                                    <li class="menu-item">
-                                                        <a href="app-user-view-notifications.html" class="menu-link">
-                                                            <div class="text-truncate" data-i18n="Notifications">Notifications</div>
-                                                        </a>
-                                                    </li>
-                                                    <li class="menu-item">
-                                                        <a href="app-user-view-connections.html" class="menu-link">
-                                                            <div class="text-truncate" data-i18n="Connections">Connections</div>
-                                                        </a>
-                                                    </li> */}
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </li>
-
-
-                            <div className="ps__rail-x" style={{ left: 0, bottom: 0 }}>
-                                <div className="ps__thumb-x" tabIndex={0} style={{ left: 0, width: 0 }} />
-                            </div>
-                            <div className="ps__rail-y" style={{ top: 0, height: 254, right: 4 }}>
-                                <div
-                                    className="ps__thumb-y"
-                                    tabIndex={0}
-                                    style={{ top: 0, height: 44 }}
-                                />
-                            </div>
-                        </ul>
-                    </aside>
                     <div className="layout-page">
                         {/* Navbar */}
                         <nav className="navbar navbar-expand-lg " style={{ lineHeight: '35px' }}>
@@ -552,20 +344,72 @@ const Commerce = () => {
                                                 <div className="col-md-6 card-separator">
                                                     <div className="p-6">
                                                         <div className="card-title d-flex align-items-start justify-content-between">
-                                                            
-                                                          
+
+
                                                         </div>
                                                         <div
                                                             className="d-flex justify-content-between"
                                                             style={{ position: "relative" }}
                                                         >
                                                             <div>
-                                                                <h3>Total Amount</h3>
-                                                                {chartData.labels.length > 0 ? (
-        <Line data={lineChartData} options={lineChartOptions} />
-      ) : (
-        <p>Loading line chart...</p>
-      )}
+                                                                <h2>Total Money Chart</h2>
+
+                                                                {/* Chọn chế độ hiển thị */}
+                                                                <div>
+                                                                    <button style={{
+                                                                        margin: '5px',
+                                                                        backgroundColor: '#03c3ec',
+                                                                        border: '1px solid white',
+                                                                        borderRadius: '20px'
+                                                                    }} onClick={() => setView("day")}> Day</button>
+                                                                    <button style={{
+                                                                        margin: '5px',
+                                                                        backgroundColor: '#6265ef',
+                                                                        border: '1px solid white',
+                                                                        borderRadius: '20px'
+                                                                    }} onClick={() => setView("week")}>Week</button>
+                                                                    <button style={{
+                                                                        margin: '5px',
+                                                                        backgroundColor: 'rgb(194 163 255)',
+                                                                        border: '1px solid white',
+                                                                        borderRadius: '20px'
+                                                                    }} onClick={() => setView("month")}>Month</button>
+                                                                </div>
+
+                                                                {/* Hiển thị biểu đồ */}
+                                                                {chartData ? (
+                                                                    <Bar
+                                                                        data={chartData}
+                                                                        options={{
+                                                                            responsive: true,
+                                                                            plugins: {
+                                                                                legend: {
+                                                                                    display: true,
+                                                                                    position: "top",
+                                                                                },
+                                                                            },
+                                                                            scales: {
+                                                                                x: {
+                                                                                    title: {
+                                                                                        display: true,
+                                                                                        text: view === "day" ? "Days" : view === "week" ? "Weeks" : "Months",
+                                                                                    },
+                                                                                },
+                                                                                y: {
+                                                                                    title: {
+                                                                                        display: true,
+                                                                                        text: "Revenue",
+                                                                                    },
+                                                                                    ticks: {
+                                                                                        callback: (value) => `$${value}`, // Hiển thị giá trị tiền tệ
+                                                                                    },
+                                                                                },
+                                                                            },
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <p>Loading chart...</p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -573,13 +417,13 @@ const Commerce = () => {
                                                 <div className="col-md-6">
                                                     <div className="p-6">
                                                         <div className="card-title d-flex align-items-start justify-content-between">
-                                                           
+
                                                         </div>
                                                         <div
                                                             className="d-flex justify-content-between"
                                                             style={{ position: "relative" }}
                                                         >
-                                                            
+
                                                             <div id="activityChart" style={{ minHeight: 120 }}>
                                                                 <div
                                                                     id="apexcharts90pj98cf"
@@ -587,13 +431,51 @@ const Commerce = () => {
                                                                     style={{ width: 180, height: 300 }}
                                                                 >
                                                                     <h3>Total Status</h3>
-                                                                     {statusChartData.labels.length > 0 ? (
-        <Pie data={statusChartData} options={pieChartOptions} />
-      ) : (
-        <p>Loading pie chart...</p>
-      )}
-                                                                    
-                                                                    
+
+                                                                    <div>
+                                                                        <div>
+                                                                            <button style={{
+                                                                                margin: '5px',
+                                                                                backgroundColor: '#03c3ec',
+                                                                                border: '1px solid white',
+                                                                                borderRadius: '20px'
+                                                                            }} onClick={() => setView("day")}> Day</button>
+                                                                            <button style={{
+                                                                                margin: '5px',
+                                                                                backgroundColor: '#6265ef',
+                                                                                border: '1px solid white',
+                                                                                borderRadius: '20px'
+                                                                            }} onClick={() => setView("week")}>Week</button>
+                                                                            <button style={{
+                                                                                margin: '5px',
+                                                                                backgroundColor: 'rgb(194 163 255)',
+                                                                                border: '1px solid white',
+                                                                                borderRadius: '20px'
+                                                                            }} onClick={() => setView("month")}>Month</button>
+                                                                        </div>
+
+
+                                                                        {orderChartData ? (
+                                                                            <Bar
+                                                                                data={orderChartData}
+                                                                                options={{
+                                                                                    responsive: true,
+                                                                                    plugins: {
+                                                                                        legend: { display: true, position: "top" },
+                                                                                    },
+                                                                                    scales: {
+                                                                                        x: { title: { display: true, text: "Time" } },
+                                                                                        y: { title: { display: true, text: "Total Orders" } },
+                                                                                    },
+                                                                                }}
+                                                                            />
+                                                                        ) : (
+                                                                            <p>Loading orders chart...</p>
+                                                                        )}
+                                                                    </div>
+
+
+
                                                                 </div>
                                                             </div>
                                                             <div className="resize-triggers">
@@ -2473,7 +2355,7 @@ const Commerce = () => {
                                                     <div className="card-header d-flex justify-content-between">
                                                         <div>
                                                             <h5 className="card-title mb-1">Report</h5>
-                                                            <p className="card-subtitle">Monthly Avg. $45.578k</p>
+
                                                         </div>
                                                         <div className="dropdown">
                                                             <button
@@ -2506,61 +2388,40 @@ const Commerce = () => {
                                                         <div className="report-list">
                                                             <div className="report-list-item rounded-2 mb-4">
                                                                 <div className="d-flex align-items-center">
-                                                                    <div className="report-list-icon shadow-xs me-4">
-                                                                        <img
-                                                                            src="../../assets/svg/icons/paypal-icon.svg"
-                                                                            width={22}
-                                                                            height={22}
-                                                                            alt="Paypal"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                                                        <div className="d-flex flex-column">
-                                                                            <span>Income</span>
-                                                                            <h5 className="mb-0">$42,845</h5>
+                                                                    {mostOrderedItem ? (
+                                                                        <div className="report-list-icon shadow-xs me-4">
+                                                                            <img
+                                                                                src={mostOrderedItem.imageURL}
+                                                                                alt={mostOrderedItem.name}
+                                                                                width={80}
+                                                                                height={70}
+
+                                                                            />
                                                                         </div>
-                                                                        <small className="text-success">+2.34k</small>
+                                                                    ) : null}
+                                                                    <div className="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                                                        {mostOrderedItem ? (
+                                                                            <div className="d-flex flex-column">
+                                                                                <div>
+                                                                                    <p>
+                                                                                        The most ordered item is <strong>{mostOrderedItem.name}</strong> with{" "}
+                                                                                        <strong>{mostOrderedItem.count}</strong> orders.
+                                                                                    </p>
+
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <p>No data available.</p>
+                                                                        )}
+                                                                        {mostOrderedItem && (
+                                                                            <small className="text-success"> + {mostOrderedItem.count}</small>
+                                                                        )}
                                                                     </div>
+
                                                                 </div>
                                                             </div>
-                                                            <div className="report-list-item rounded-2 mb-4">
-                                                                <div className="d-flex align-items-center">
-                                                                    <div className="report-list-icon shadow-xs me-4">
-                                                                        <img
-                                                                            src="../../assets/svg/icons/credit-card-icon.svg"
-                                                                            width={22}
-                                                                            height={22}
-                                                                            alt="Shopping Bag"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                                                        <div className="d-flex flex-column">
-                                                                            <span>Expense</span>
-                                                                            <h5 className="mb-0">$38,658</h5>
-                                                                        </div>
-                                                                        <small className="text-danger">-1.15k</small>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="report-list-item rounded-2">
-                                                                <div className="d-flex align-items-center">
-                                                                    <div className="report-list-icon shadow-xs me-4">
-                                                                        <img
-                                                                            src="../../assets/svg/icons/wallet-icon.svg"
-                                                                            width={22}
-                                                                            height={22}
-                                                                            alt="Wallet"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                                                        <div className="d-flex flex-column">
-                                                                            <span>Profit</span>
-                                                                            <h5 className="mb-0">$18,220</h5>
-                                                                        </div>
-                                                                        <small className="text-success">+1.35k</small>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+
+
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5155,7 +5016,7 @@ const Commerce = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Total Balance */}
                                     <div className="col-lg-5 col-xxl-4">
                                         <div className="card h-100">
@@ -5950,10 +5811,6 @@ const Commerce = () => {
                         </div>
                         {/* Content wrapper */}
                     </div>
-
-
-
-
                 </div>
 
             </div>
